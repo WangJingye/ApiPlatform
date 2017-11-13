@@ -1,0 +1,7 @@
+<ul class="nav nav-pills nav-stacked col-md-2 menu-list" style=" border-right: 1px solid #ccc;min-height: 100px;padding: 0;text-align: center">
+    <?php if($user['is_admin']){?>
+    <li role="presentation" <?=$leftKey=='Platform'?'class="active"':''?>><a href="<?=U('Home/Platform/index')?>">店铺列表</a></li>
+    <li role="presentation" <?=$leftKey=='User'?'class="active"':''?>><a href="<?=U('Home/User/index')?>">用户列表</a></li>
+    <?php }?>
+    <li role="presentation" <?=$leftKey=='Upload'?'class="active"':''?>><a href="<?=U('Home/Upload/index')?>">销售记录上传</a></li>
+</ul>

@@ -1,0 +1,43 @@
+<div class="col-lg-6">
+    <form class="form-horizontal" action="<?= U('Home/User/add') ?>" method="post">
+        <div class="form-group">
+            <label class="col-sm-4 control-label">用户名称</label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" name="username" placeholder="用户名称"
+                       value="<?= $search['username'] ?>">
+                <div class="alert-danger"
+                     style="margin-top: 5px;text-align: center"><?= $error_info['username'] ?></div>
+            </div>
+
+        </div>
+        <div class="form-group">
+            <label class="col-sm-4 control-label">店铺</label>
+            <div class="col-sm-8">
+                <select class="form-control" name="platform_id">
+                    <option value="">--请选择--</option>
+                    <?php foreach ($platformList as $key => $value) { ?>
+                        <option value="<?= $key ?>" <?= $search['platform_id'] == $key ? 'selected' : '' ?>><?= $value ?></option>
+                    <?php } ?>
+                </select>
+                <div class="alert-danger"
+                     style="margin-top: 5px;text-align: center"><?= $error_info['platform_id'] ?></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-4 control-label">登录密码</label>
+            <div class="col-sm-8">
+                <input type="password" class="form-control" name="password" placeholder="登录密码"
+                       value="<?= $search['password'] ?>">
+                <div class="alert-danger"
+                     style="margin-top: 5px;text-align: center"><?= $error_info['password'] ?></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-4 col-sm-8">
+                <input type="submit" class="btn btn-success" value="点击注册"/>
+            </div>
+        </div>
+    </form>
+</div>

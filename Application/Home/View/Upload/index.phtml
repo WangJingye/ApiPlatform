@@ -1,0 +1,53 @@
+<a href="<?= U('Home/Upload/upload') ?>" class="btn btn-success"><i class="glyphicon glyphicon-plus"></i> 销售记录上传</a>
+
+<table class="table table-bordered">
+    <tr>
+        <td class="col-md-1">记录ID</td>
+        <td class="col-md-3">店铺名称</td>
+        <td class="col-md-2">文件名</td>
+        <td class="col-md-1">执行状态</td>
+        <td class="col-md-2">创建时间</td>
+        <td class="col-md-3">操作</td>
+    </tr>
+    <?php foreach ($list as $v) { ?>
+        <tr>
+            <td><?= $v['id'] ?></td>
+            <td><?= $platformList[$v['platform_id']] ?></td>
+            <td><?= $v['file_name'] ?></td>
+            <td class="<?= $v['status'] == 1 ? 'bg-success' : ($v['status'] == 2 ? 'bg-danger' : 'bg-info') ?>">
+                <?php if ($v['status'] == 1) { ?>
+                    已完成
+                <?php } else if ($v['status'] == 0) { ?>
+                    未执行
+                <?php } else { ?>
+                    同步错误
+                <?php } ?>
+            </td>
+            <td><?= date('Y-m-d H:i:s', $v['create_time']) ?></td>
+            <td>
+                <?php if ($v['status'] == 0) { ?>
+                    <a onClick="javascript:window.open('<?= U('Home/Upload/complete', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
+                       href="#" target="_blank" class="btn btn-sm btn-primary"><i
+                                class="glyphicon glyphicon-refresh"></i> 立即同步</a>
+                    <a href="<?= U('Home/Upload/delete', ['id' => $v['id']]) ?>"
+                       class="btn btn-sm btn-default"><i class="glyphicon glyphicon-remove"></i> 删除</a>
+                <?php } ?>
+                <?php if ($v['status'] == 1) { ?>
+                    <a onClick="javascript:window.open('<?= U('Home/Upload/seeLog', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
+                       href="#" target="_blank" class="btn btn-sm btn-warning"><i
+                                class="glyphicon glyphicon-eye-open"></i> 查看日志</a>
+                <?php } ?>
+                <?php if ($v['status'] == 2) { ?>
+                    <a href="<?= U('Home/Upload/wsdlList', ['id' => $v['id']]) ?>"
+                       class="btn btn-sm btn-danger"><i
+                                class="glyphicon glyphicon-eye-open"></i> 错误详情</a>
+                    <a onClick="javascript:window.open('<?= U('Home/Upload/seeLog', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
+                       href="#" target="_blank" class="btn btn-sm btn-warning"><i
+                                class="glyphicon glyphicon-eye-open"></i> 查看日志</a>
+                <?php } ?>
+            </td>
+        </tr>
+    <?php } ?>
+</table>
+
+

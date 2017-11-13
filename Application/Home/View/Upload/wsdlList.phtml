@@ -1,0 +1,48 @@
+<table class="table table-bordered">
+    <tr>
+        <td class="col-md-1">记录ID</td>
+        <td class="col-md-2">单据编号</td>
+        <td class="col-md-2">支付金额</td>
+        <td class="col-md-1">数量</td>
+        <td class="col-md-1">状态</td>
+        <td class="col-md-2">添加时间</td>
+        <td class="col-md-2">操作</td>
+    </tr>
+    <?php
+    $statusList = [
+        0 => '未执行',
+        1 => '已完成',
+        2 => '同步出错'
+    ];
+
+    foreach ($list as $v) { ?>
+        <tr>
+            <td><?= $v['id'] ?></td>
+            <td><?= $v['trade_no'] ?></td>
+            <td><?= $v['netamount'] ?></td>
+            <td><?= $v['qty'] ?></td>
+            <td><?= $statusList[$v['status']] ?></td>
+            <td><?= date('Y-m-d H:i:s', $v['create_time']) ?></td>
+            <td>
+                <?php if ($v['status'] == 0) { ?>
+                    <a href="<?= U('Home/Upload/completeOne', ['id' => $v['id']]) ?>"
+                       class="btn btn-sm btn-primary"><i
+                                class="glyphicon glyphicon-refresh"></i> 立即同步</a>
+                <?php } ?>
+
+                <?php if ($v['status'] == 1) { ?>
+
+                <?php } ?>
+
+                <?php if ($v['status'] == 2) { ?>
+                    <a onClick="javascript:window.open('<?= U('Home/Upload/completeOne', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
+                       href="javascript:void(0)" class="btn btn-sm btn-danger"><i
+                                class="glyphicon glyphicon-eye-open"></i> 再次同步</a>
+                <?php } ?>
+
+            </td>
+        </tr>
+    <?php } ?>
+</table>
+
+

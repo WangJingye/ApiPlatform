@@ -1,0 +1,39 @@
+<a href="<?= U('Home/Platform/add') ?>" class="btn btn-success">新增店铺</a>
+
+<table class="table table-bordered">
+    <tr>
+        <td class="col-md-1">店铺编号</td>
+        <td class="col-md-3">店铺名称</td>
+        <td class="col-md-1">店铺关键字</td>
+        <td class="col-md-1">是否可用</td>
+        <td class="col-md-1">FTP</td>
+        <td class="col-md-1">WebService</td>
+        <td class="col-md-2">创建时间</td>
+        <td class="col-md-3">操作</td>
+    </tr>
+    <?php foreach ($list as $v) { ?>
+        <tr>
+            <td><?= $v['platform_id'] ?></td>
+            <td><?= $v['platform_name'] ?></td>
+            <td><?= $v['type_code'] ?></td>
+            <td><?= $v['status'] ? '是' : '否' ?></td>
+            <td><?= $v['ftp_need'] ? '是' : '否' ?></td>
+            <td><?= $v['wsdl_need'] ? '是' : '否' ?></td>
+            <td><?= date('Y-m-d H:i:s', $v['create_time']) ?></td>
+            <td>
+                <a href="<?= U('Home/Platform/update', ['platform_id' => $v['platform_id']]) ?>"
+                   class="btn btn-sm btn-primary"><i class="glyphicon glyphicon-wrench"></i> 编辑</a>
+                <?php if ($v['ftp_need']) { ?>
+                    <a href="<?= U('Home/Platform/setFtp', ['platform_id' => $v['platform_id']]) ?>"
+                       class="btn btn-sm btn-warning"><i class="glyphicon glyphicon-folder-open"></i> 设置FTP</a>
+                <?php } ?>
+                <?php if ($v['wsdl_need']) { ?>
+                    <a href="<?= U('Home/Platform/setWsdl', ['platform_id' => $v['platform_id']]) ?>"
+                       class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-cloud"></i> 设置WSDL</a>
+                <?php } ?>
+            </td>
+        </tr>
+    <?php } ?>
+</table>
+
+

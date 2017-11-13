@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>数据管理系统</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+</head>
+<link rel="stylesheet" href="__PUBLIC__/css/bootstrap.min.css">
+<link rel="stylesheet" href="__PUBLIC__/css/common.css">
+<body class="login-page">
+<div class="login-box">
+    <div class="login-logo">
+        <b>数据管理系统</b>
+    </div>
+
+    <div class="login-box-body">
+        <p class="login-box-msg"></p>
+
+        <form action="<?= U('Home/User/login') ?>" method="post">
+            <div class="form-group has-feedback">
+                <input type="text" name="username" class="form-control" placeholder="用户名" maxlength="255" required="">
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+
+            <div class="form-group has-feedback">
+                <input type="password" name="password" class="form-control" placeholder="密码" required="">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <button type="submit" class="btn btn-primary btn-block">登入</button>
+                </div>
+            </div>
+        </form>
+        <div class="alert-danger" style="text-align: center;margin-top: 20px;">
+            <?= $error_message ?>
+        </div>
+    </div>
+</div>
+</body>
+</html>

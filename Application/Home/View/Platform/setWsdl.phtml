@@ -1,0 +1,72 @@
+<div class="container clearfix">
+    <div class="col-sm-6">
+        <form class="form-horizontal" method="post">
+            <input type="hidden" name="platform_id" value="<?= $platform['platform_id'] ?>">
+            <?php if ($wsdl['conf_id']) { ?>
+                <input type="hidden" name="conf_id" value="<?= $wsdl['conf_id'] ?>">
+            <?php } ?>
+            <div class="form-group">
+                <label class="col-sm-4 control-label">收银机号</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="tillid" placeholder="收银机号"
+                           value="<?= $wsdl['tillid'] ?>">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label">wsdl链接地址</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="wsdl" placeholder="wsdl链接地址"
+                           value="<?= $wsdl['wsdl'] ?>">
+                </div>
+
+            </div>  <div class="form-group">
+                <label class="col-sm-4 control-label">wsdl用户名</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="username" placeholder="wsdl用户名"
+                           value="<?= $wsdl['username'] ?>">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label">wsdl密码</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="password" placeholder="wsdl密码"
+                           value="<?= $wsdl['password'] ?>">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label">商场编号</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="mallid" placeholder="商场编号"
+                           value="<?= $wsdl['mallid'] ?>">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label">wsdl店铺号</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="storecode" placeholder="店铺号"
+                           value="<?= $wsdl['storecode'] ?>">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label">交易货号</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="itemcode" placeholder="交易货号"
+                           value="<?= $wsdl['itemcode'] ?>">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-4 col-sm-8">
+                    <input type="submit" class="btn btn-success" value="确认"/>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+

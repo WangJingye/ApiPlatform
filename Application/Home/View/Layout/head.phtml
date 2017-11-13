@@ -1,0 +1,69 @@
+<nav class="navbar navbar-default navbar-inverse" style="border-radius: inherit;margin-bottom: 0">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="<?= U('/') ?>">接口管理系统</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false"><?= $user['username'] ?> <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="javascript:void(0)"><?= $user['platform_id'] ? $platformList[$user['platform_id']] : '' ?></a>
+                        </li>
+                        <li><a href="javascript:void(0)" class="change-password"
+                               data-key="<?= $user['user_id'] ?>">修改密码</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="<?= U('Home/User/logout') ?>">登出</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+<div class="modal fade" id="change-password-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document" style="width: 400px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">密码修改</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <input type="hidden" name="user_id" value="0">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">输入密码</label>
+                        <div class="col-sm-9">
+                            <input type="password" class="form-control" name="password" placeholder="输入密码">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">确定密码</label>
+                        <div class="col-sm-9">
+                            <input type="password" class="form-control" name="re_password" placeholder="确定密码">
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary change-password-confirm"
+                        data-url="<?= U('Home/User/changePassword') ?>">保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

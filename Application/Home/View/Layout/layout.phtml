@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="__PUBLIC__/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="__PUBLIC__/css/bootstrap-datetimepicker.css"/>
+    <link rel="stylesheet" href="__PUBLIC__/css/common.css"/>
+</head>
+<body>
+<include file="Layout/head"/>
+<div class="row">
+    <include file="Layout/left"/>
+    <div class="col-md-10">
+        <div style="padding: 10px">
+            {__CONTENT__}
+        </div>
+    </div>
+</div>
+
+</body>
+<script src="__PUBLIC__/js/jquery-2.2.3.min.js"></script>
+<script src="__PUBLIC__/js/bootstrap.min.js"></script>
+<script src="__PUBLIC__/js/bootstrap-datetimepicker.js"></script>
+<script src="__PUBLIC__/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<script src="__PUBLIC__/js/common.js"></script>
+<?php if (isset($this->script)) {
+    foreach ($this->script as $v) { ?>
+        <script src="<?= $v ?>"></script>
+    <?php }
+} ?>
+<script>
+    $(function () {
+        $('.change-password').click(function () {
+            var model = $('#change-password-modal');
+            model.find('[name=user_id]').val($(this).data('key'));
+            model.modal('toggle');
+        });
+        $('.change-password-confirm').click(function () {
+            var model = $('#change-password-modal');
+            $.post($(this).data('url'), model.find('form').serialize(), function (result) {
+                if (result.code == '0') {
+                    model.modal('toggle');
+                    alert('密码已修改!');
+                    if (result.jumpUrl.length) {
+                        location.href = result.jumpUrl;
+                    }
+                } else {
+                    alert(result.msg);
+                }
+            }, 'json');
+        });
+    })
+</script>
+</html>
