@@ -2,6 +2,8 @@
 */.DS_Store
 .DS_Store
 Application/Common/Conf/db.php
+Application/Upload
+Application/FtpFile
 Application/Runtime
 Runtime
 */index.html
