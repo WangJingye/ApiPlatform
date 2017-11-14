@@ -175,4 +175,13 @@ class BaseController extends Controller
         }
         return $tradeKey['start_num'];
     }
+
+    public function regularAscii($str)
+    {
+        $reg = "/^[\x{00}-\x{ff}]*$/u";
+        if (preg_match($reg, $str)) {
+            return true;
+        }
+        return false;
+    }
 }

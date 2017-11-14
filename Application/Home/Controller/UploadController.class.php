@@ -309,14 +309,29 @@ class UploadController extends BaseController
         $needList = [];
         for ($row = 12; $row <= $highestRow; $row++) {
             $tradeNo = $objWorksheet->getCell('C' . $row)->getValue();
+            if (!$this->regularAscii($tradeNo)) {
+                $this->error('【C 列】单据单号 不能是中文');
+            }
             $tradeTime = $objWorksheet->getCell('B' . $row)->getValue();
             $tradeTime = strtotime($tradeTime);
-
+            if (!$tradeTime) {
+                $this->error('【B 列】交易时间 格式有误（格式为：2017/11/8 14:36:53）');
+            }
             $need = [];
             $qty = $objWorksheet->getCell('L' . $row)->getValue();//商品数量
+            if (!is_numeric($qty) ) {
+                $this->error('【L 列】商品数量必需是整数！');
+            }
             $need['itemcode'] = $objWorksheet->getCell('F' . $row)->getValue();//商品编号
+
             $need['originalamount'] = floatval($objWorksheet->getCell('I' . $row)->getValue());//原价
+            if (!is_numeric($need['originalamount'])) {
+                $this->error('【I 列】原价必需是数字！');
+            }
             $need['unitamount'] = floatval($objWorksheet->getCell('K' . $row)->getValue());//原价
+            if (!is_numeric($need['originalamount'])) {
+                $this->error('【K 列】单价必需是数字！');
+            }
             $need['qty'] = (int)$qty;
             if ($need['qty'] == 0) {
                 continue;
