@@ -319,7 +319,7 @@ class UploadController extends BaseController
             }
             $need = [];
             $qty = $objWorksheet->getCell('L' . $row)->getValue();//商品数量
-            if (!is_numeric($qty) ) {
+            if (!is_numeric($qty)) {
                 $this->error('【L 列】商品数量必需是整数！');
             }
             $need['itemcode'] = $objWorksheet->getCell('F' . $row)->getValue();//商品编号
@@ -516,7 +516,9 @@ class UploadController extends BaseController
             if (count($itemList) == 0) {
                 continue;
             }
-
+            if ($totalNetAmount == 0) {
+                continue;
+            }
 
             $params['salestotal'] = [
                 'txdate_yyyymmdd' => date('Ymd', $need['tradeTime']),
@@ -621,7 +623,7 @@ class UploadController extends BaseController
                 $totalNetAmount += $item['netamount'];
                 $itemList[] = $item;
             }
-            if (count($itemList) == 0) {
+            if ($totalNetAmount == 0) {
                 continue;
             }
 
@@ -684,7 +686,6 @@ class UploadController extends BaseController
             $totalOriginalAmount = 0;
             $totalQty = 0;
             $totalNetAmount = 0;
-            $itemList = [];
             foreach ($need['itemList'] as $item) {
                 if ($item['qty'] == 0) {
                     continue;
@@ -692,18 +693,13 @@ class UploadController extends BaseController
                 $totalOriginalAmount += $item['originalamount'];
                 $totalQty += $item['qty'];
                 $totalNetAmount += $item['netamount'];
-                $itemList[] = sprintf('{%s,%s,%s}', $this->platformWsdlConf['itemcode'], abs($item['qty']), $item['qty'] < 0 ? -$item['unitamount'] : $item['unitamount']);
             }
-            if (count($itemList) == 0) {
-                continue;
-            }
-            $params['strType'] = $totalQty > 0 ? 'SA' : 'SR';
+            $params['strType'] = $totalNetAmount > 0 ? 'SA' : 'SR';
             $params['strSalesDate_YYYYMMDD'] = date('Ymd', $need['tradeTime']);
             $params['strSalesTime_HHMISS'] = date('His', $need['tradeTime']);
             $params['strSalesDocNo'] = $tradeNo;
             $params['strTenderCode'] = sprintf('{CH,%s,0,0}', $totalNetAmount);
-            $params['strItems'] = implode(',', $itemList);
-
+            $params['strItems'] = sprintf('{%s,%s,%s}', $this->platformWsdlConf['itemcode'], $totalNetAmount > 0 ? 1 : -1, $totalNetAmount);
             $uploadWsdlModel = new UploadWsdlModel();
             $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo])->find();
             if ($uploadWsdl) {
