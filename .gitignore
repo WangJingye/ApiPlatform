@@ -2,4 +2,7 @@
 .idea
 */.DS_Store
 .DS_Store
-Application/Common/db.php
+Application/Common/Conf/db.php
+Application/Runtime
+Runtime
+*/index.html
