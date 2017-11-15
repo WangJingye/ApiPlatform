@@ -462,9 +462,11 @@ class UploadController extends BaseController
         $result = $ftp->save($ftpFile);
         if (!$result) {
             $this->errorCode = 1;
-            $this->printHandel('FTP文件上传失败');
+            $this->printHandel('FTP文件上传失败 '. $ftp->getError());
+        }else{
+            $this->printHandel('FTP文件上传成功');
+
         }
-        $this->printHandel('FTP文件上传成功');
     }
 
     private function wsdlDataHandle($needList)
