@@ -637,10 +637,10 @@ class UploadController extends BaseController
                 '收银机号' => $this->platformWsdlConf['tillid'],
                 '交易流水号' => $tradeNo,
                 '交易时间' => date('Y-m-d H:i:s', $need['tradeTime']),
-                '交易类型' => $totalQty > 0 ? 1 : 3,
+                '交易类型' => $totalNetAmount > 0 ? 1 : 3,
                 '商品代码' => $this->platformWsdlConf['itemcode'],
                 '价格' => $totalNetAmount,
-                '数量' => $totalQty,
+                '数量' => 1,
                 '金额' => $totalNetAmount,
                 '付款方式' => '',
                 '原交易收银机号' => '',
@@ -668,7 +668,7 @@ class UploadController extends BaseController
                 'trade_no' => $tradeNo,
                 'netamount' => $totalNetAmount,
                 'request_data' => json_encode($params),
-                'qty' => $totalQty,
+                'qty' => 1,
                 'status' => 0
             ]);
             $uploadWsdlModel->add($uploadWsdlModel->data());
