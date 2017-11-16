@@ -368,18 +368,9 @@ class UploadController extends BaseController
 
     private function ftpDataHandle($needList)
     {
-        $filename = $this->platformFtpConf['file_name'];
-        $filename = str_replace('{ar}', $this->platformFtpConf['ar'], $filename);
-        if (strpos($filename, '{time') !== false) {
-            preg_match_all('/\{time\:(.*?)\}/', $filename, $matches);
-            foreach ($matches[0] as $key => $match) {
-                $filename = str_replace($match, date($matches[1][$key]), $filename);
-            }
-            unset($matches);
-        }
+        $firstData = '';
+        $filename = '';
         $log = new Log();
-        $log->path = APP_PATH . 'FtpFile/' . $this->platform['type_code'] . '/' . $filename . '.' . $this->upload['id'];
-
         foreach ($needList as $tradeNo => $need) {
             $totalOriginalAmount = 0;
             $totalQty = 0;
@@ -422,7 +413,21 @@ class UploadController extends BaseController
             $content = str_replace('{tradeno}', $tradeNo, $content);
             $content = str_replace('{discountamount}', $totalOriginalAmount - $totalNetAmount, $content);
             $content = str_replace('{netamount}', $totalNetAmount, $content);
-            $content = str_replace('{is_refund}', $totalQty > 0 ? 0 : 1, $content);
+            $content = str_replace('{is_refund}', $totalNetAmount > 0 ? 0 : 1, $content);
+            if ($firstData == '') {
+                $firstData = $need['tradeTime'];
+                $filename = $this->platformFtpConf['file_name'];
+                $filename = str_replace('{ar}', $this->platformFtpConf['ar'], $filename);
+                if (strpos($filename, '{time') !== false) {
+                    preg_match_all('/\{time\:(.*?)\}/', $filename, $matches);
+                    foreach ($matches[0] as $key => $match) {
+                        $filename = str_replace($match, date($matches[1][$key], $firstData), $filename);
+                    }
+                    unset($matches);
+                }
+                $log->path = APP_PATH . 'FtpFile/' . $this->platform['type_code'] . '/' . $filename . '.' . $this->upload['id'];
+            }
+
             $log->saveLog($content);
         }
         $uploadFtpModel = new UploadFtpModel();
@@ -464,8 +469,8 @@ class UploadController extends BaseController
         $result = $ftp->save($ftpFile);
         if (!$result) {
             $this->errorCode = 1;
-            $this->printHandel('FTP文件上传失败 '. $ftp->getError());
-        }else{
+            $this->printHandel('FTP文件上传失败 ' . $ftp->getError());
+        } else {
             $this->printHandel('FTP文件上传成功');
 
         }
