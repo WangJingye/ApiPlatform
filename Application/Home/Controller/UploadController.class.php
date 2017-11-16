@@ -585,7 +585,7 @@ class UploadController extends BaseController
                 return;
             }
 
-            if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == 0) {
+            if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == -100) {
                 $uploadWsdl['status'] = 1;
                 $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求成功！');
             } else {
