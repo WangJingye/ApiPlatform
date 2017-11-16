@@ -179,6 +179,7 @@ class UploadController extends BaseController
 
             }
         }
+        $this->printHandel('上传完成！');
         $this->upload['status'] = $this->errorCode == 0 ? 1 : 2;
         $this->upload['log_data'] = $this->printMessage;
         $uploadModel->create($this->upload);
