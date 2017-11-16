@@ -453,10 +453,11 @@ class UploadController extends BaseController
             'password' => $this->platformFtpConf['password'], //密码
         ];
         $ftp = new Ftp($config);
+
         $ftpFile = [
             'savepath' => '/',
             'savename' => str_replace('.' . $this->upload['id'], '', $filename),
-            'tmp_name' => $log->path
+            'tmp_name' => realpath($log->path)
         ];
         $this->printHandel('准备上传FTP文件...');
         $result = $ftp->save($ftpFile);
