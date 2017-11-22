@@ -61,6 +61,7 @@ class UploadController extends BaseController
 
     public function index()
     {
+        $perPage = 10;
         $page = 1;
         if (isset($_GET['page']) && $_GET['page']) {
             $page = (int)$_GET['page'];
@@ -71,16 +72,20 @@ class UploadController extends BaseController
         $uploadModel = new UploadModel();
         $where = [];
         if (!$this->user['is_admin']) {
-            $where[] = 'a.platform_id=' . $this->platform['platform_id'];
+            $where['a.platform_id'] = $this->platform['platform_id'];
         }
-        $sql = 'select a.id,b.platform_name,a.file_name,a.status,a.create_time,b.ftp_need,b.wsdl_need from upload as a left join platform as b on a.platform_id=b.platform_id';
-        if (count($where)) {
-            $sql .= ' where ' . implode(' and ', $where);
+        $totalNumber = $uploadModel->table('upload as a')->join('left join platform as b on b.platform_id=a.platform_id')->where($where)->count();
+        $totalPage = ceil($totalNumber / $perPage);
+        if ($page > $totalPage) {
+            $page = $totalPage;
         }
-        $sql .= ' order by a.status asc,a.create_time desc';
-        $sql .= ' limit ' . (10 * ($page - 1)) . ',' . (10);
-        $list = $uploadModel->query($sql);
+        $selector = $uploadModel->table('upload as a')->join('left join platform as b on b.platform_id=a.platform_id')->where($where);
+        $list = $selector->field('a.id,b.platform_name,a.file_name,a.status,a.create_time,b.ftp_need,b.wsdl_need')->order('a.create_time desc')
+            ->limit(($perPage * ($page - 1)) . ',' . $perPage)->select();
+
         $this->assign('list', $list);
+        $this->assign('total_page', $totalPage);
+        $this->assign('current_page', $page);
         $this->display();
 
     }

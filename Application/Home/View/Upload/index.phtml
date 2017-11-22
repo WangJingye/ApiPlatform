@@ -45,7 +45,7 @@
                     <a onClick="javascript:window.open('<?= U('Home/Upload/seeLog', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
                        href="#" target="_blank" class="btn btn-sm btn-warning"><i
                                 class="glyphicon glyphicon-eye-open"></i> 查看日志</a>
-                <?php }else if ($v['ftp_need'] && $v['status'] == 2){?>
+                <?php } else if ($v['ftp_need'] && $v['status'] == 2) { ?>
                     <a onClick="javascript:window.open('<?= U('Home/Upload/seeLog', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
                        href="#" target="_blank" class="btn btn-sm btn-danger"><i
                                 class="glyphicon glyphicon-eye-open"></i> 错误详情</a>
@@ -53,6 +53,42 @@
             </td>
         </tr>
     <?php } ?>
+
 </table>
-
-
+<?php if ($total_page > 1) { ?>
+    <div style="text-align: center">
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            <li <?= $current_page == 1 ? 'class="disabled"' : '' ?>>
+                <a href="<?= U('Home/Upload/index', ['page' => $current_page == 1 ? $current_page : $current_page - 1]) ?>"
+                   aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <?php if ($total_page <= 10) {
+                $max = $total_page;
+                $min = 1;
+            } else if ($current_page + 5 <= $total_page && $current_page > 5) {
+                $max = $current_page + 5;
+                $min = $current_page - 4;
+            } else if ($current_page < $total_page && $current_page + 5 >= $total_page) {
+                $max = $total_page;
+                $min = $total_page - 9;
+            } else if ($current_page < 5) {
+                $min = 1;
+                $max = 10;
+            }
+            for ($i = $min; $i <= $max; $i++) { ?>
+                <li <?= $i == $current_page ? 'class="active"' : '' ?>><a
+                            href="<?= U('Home/Upload/index', ['page' => $i]) ?>"><?= $i ?></a></li>
+            <?php } ?>
+            <li <?= $current_page == $total_page ? 'class="disabled"' : '' ?>>
+                <a href="<?= U('Home/Upload/index', ['page' => $current_page == $total_page ? $current_page : $current_page + 1]) ?>"
+                   aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    </div>
+<?php } ?>
