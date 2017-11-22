@@ -61,7 +61,7 @@ class UploadController extends BaseController
 
     public function index()
     {
-        $perPage = 10;
+        $perPage = 20;
         $page = 1;
         if (isset($_GET['page']) && $_GET['page']) {
             $page = (int)$_GET['page'];
