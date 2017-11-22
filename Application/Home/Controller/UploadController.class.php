@@ -61,12 +61,25 @@ class UploadController extends BaseController
 
     public function index()
     {
+        $page = 1;
+        if (isset($_GET['page']) && $_GET['page']) {
+            $page = (int)$_GET['page'];
+        }
+        if ($page < 1) {
+            $page = 1;
+        }
         $uploadModel = new UploadModel();
         $where = [];
         if (!$this->user['is_admin']) {
-            $where = ['platform_id' => $this->platform['platform_id']];
+            $where[] = 'a.platform_id=' . $this->platform['platform_id'];
         }
-        $list = $uploadModel->where($where)->order('create_time desc')->select();
+        $sql = 'select a.id,b.platform_name,a.file_name,a.status,a.create_time,b.ftp_need,b.wsdl_need from upload as a left join platform as b on a.platform_id=b.platform_id';
+        if (count($where)) {
+            $sql .= ' where ' . implode(' and ', $where);
+        }
+        $sql .= ' order by a.status asc,a.create_time desc';
+        $sql .= ' limit ' . (10 * ($page - 1)) . ',' . (10);
+        $list = $uploadModel->query($sql);
         $this->assign('list', $list);
         $this->display();
 
@@ -495,31 +508,16 @@ class UploadController extends BaseController
             $totalOriginalAmount = 0;
             $totalQty = 0;
             $totalNetAmount = 0;
-            $itemList = [];
+            $itemList = $need['itemList'];
             $i = 1;
-            foreach ($need['itemList'] as $item) {
+            foreach ($itemList as $key => $item) {
                 if ($item['qty'] == 0) {
+                    unset($itemList[$key]);
                     continue;
                 }
                 $totalOriginalAmount += $item['originalamount'];
                 $totalQty += $item['qty'];
                 $totalNetAmount += $item['netamount'];
-                $itemList[] = [
-                    'itemcode' => $this->platformWsdlConf['itemcode'],
-                    'lineno' => $i,
-                    'invttype' => 0,
-                    'qty' => $item['qty'],
-                    'netamount' => $item['netamount'],
-                    'originalprice' => $item['originalamount'],
-                    'sellingprice' => $item['netamount'],
-                    'vipdiscountpercent' => 1,
-                    'vipdiscountless' => 0,
-                    'totaldiscountless1' => 0,
-                    'totaldiscountless2' => 0,
-                    'totaldiscountless' => 0,
-                    'bonusearn' => 0,
-                    'exstk2sales' => 0,
-                ];
                 $i++;
             }
             if (count($itemList) == 0) {
@@ -536,8 +534,8 @@ class UploadController extends BaseController
                 'storecode' => $this->platformWsdlConf['storecode'],
                 'tillid' => $this->platformWsdlConf['tillid'],
                 'txdocno' => $tradeNo,
-                'netqty' => $totalQty,
-                'originalamount' => $totalOriginalAmount,
+                'netqty' => $totalNetAmount > 0 ? 1 : -1,
+                'originalamount' => $totalNetAmount,
                 'sellingamount' => $totalNetAmount,
                 'couponqty' => 0,
                 'netamount' => $totalNetAmount,
@@ -548,7 +546,24 @@ class UploadController extends BaseController
                 'cashier' => '1022',
                 'salesman' => '1022',
             ];
-            $params['salesitems'] = $itemList;
+            $params['salesitems'] = [
+                [
+                    'itemcode' => $this->platformWsdlConf['itemcode'],
+                    'lineno' => 1,
+                    'invttype' => 0,
+                    'qty' => $totalNetAmount > 0 ? 1 : -1,
+                    'netamount' => $totalNetAmount,
+                    'originalprice' => $totalNetAmount,
+                    'sellingprice' => $totalNetAmount,
+                    'vipdiscountpercent' => 1,
+                    'vipdiscountless' => 0,
+                    'totaldiscountless1' => 0,
+                    'totaldiscountless2' => 0,
+                    'totaldiscountless' => 0,
+                    'bonusearn' => 0,
+                    'exstk2sales' => 0,
+                ]
+            ];
             $params['salestenders'] = [
                 [
                     'lineno' => 1,
@@ -572,7 +587,7 @@ class UploadController extends BaseController
                 'trade_no' => $tradeNo,
                 'netamount' => $totalNetAmount,
                 'request_data' => json_encode(['astr_request' => $params]),
-                'qty' => $totalQty,
+                'qty' => $totalNetAmount > 0 ? 1 : -1,
                 'status' => 0
             ]);
             $uploadWsdlModel->add($uploadWsdlModel->data());
@@ -622,7 +637,6 @@ class UploadController extends BaseController
             $totalOriginalAmount = 0;
             $totalQty = 0;
             $totalNetAmount = 0;
-            $itemList = [];
             foreach ($need['itemList'] as $item) {
                 if ($item['qty'] == 0) {
                     continue;
@@ -630,7 +644,6 @@ class UploadController extends BaseController
                 $totalOriginalAmount += $item['originalamount'];
                 $totalQty += $item['qty'];
                 $totalNetAmount += $item['netamount'];
-                $itemList[] = $item;
             }
             if ($totalNetAmount == 0) {
                 continue;

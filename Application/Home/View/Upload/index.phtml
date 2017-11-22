@@ -1,5 +1,6 @@
-<a href="<?= U('Home/Upload/upload') ?>" class="btn btn-success"><i class="glyphicon glyphicon-plus"></i> 销售记录上传</a>
-
+<div class="btn-group" style="margin-bottom: 10px">
+    <a href="<?= U('Home/Upload/upload') ?>" class="btn btn-success"><i class="glyphicon glyphicon-plus"></i> 销售记录上传</a>
+</div>
 <table class="table table-bordered">
     <tr>
         <td class="col-md-1">记录ID</td>
@@ -12,7 +13,7 @@
     <?php foreach ($list as $v) { ?>
         <tr>
             <td><?= $v['id'] ?></td>
-            <td><?= $platformList[$v['platform_id']] ?></td>
+            <td><?= $v['platform_name'] ?></td>
             <td><?= $v['file_name'] ?></td>
             <td class="<?= $v['status'] == 1 ? 'bg-success' : ($v['status'] == 2 ? 'bg-danger' : 'bg-info') ?>">
                 <?php if ($v['status'] == 1) { ?>
@@ -37,13 +38,17 @@
                        href="#" target="_blank" class="btn btn-sm btn-warning"><i
                                 class="glyphicon glyphicon-eye-open"></i> 查看日志</a>
                 <?php } ?>
-                <?php if ($v['status'] == 2) { ?>
+                <?php if ($v['wsdl_need'] && $v['status'] == 2) { ?>
                     <a href="<?= U('Home/Upload/wsdlList', ['id' => $v['id']]) ?>"
                        class="btn btn-sm btn-danger"><i
                                 class="glyphicon glyphicon-eye-open"></i> 错误详情</a>
                     <a onClick="javascript:window.open('<?= U('Home/Upload/seeLog', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
                        href="#" target="_blank" class="btn btn-sm btn-warning"><i
                                 class="glyphicon glyphicon-eye-open"></i> 查看日志</a>
+                <?php }else if ($v['ftp_need'] && $v['status'] == 2){?>
+                    <a onClick="javascript:window.open('<?= U('Home/Upload/seeLog', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
+                       href="#" target="_blank" class="btn btn-sm btn-danger"><i
+                                class="glyphicon glyphicon-eye-open"></i> 错误详情</a>
                 <?php } ?>
             </td>
         </tr>
