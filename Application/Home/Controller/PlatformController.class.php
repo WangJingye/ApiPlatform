@@ -23,7 +23,7 @@ class PlatformController extends BaseController
     {
         $model = new PlatformModel();
 
-        $list = $model->select();
+        $list = $model->order('platform_id desc')->select();
         $this->assign('list', $list);
         $this->display();
     }
