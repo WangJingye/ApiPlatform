@@ -7,7 +7,7 @@ use Common\Common\Log;
 use Common\Model\UploadFtpModel;
 use Common\Model\UploadModel;
 use Common\Model\UploadWsdlModel;
-use Think\Exception;
+use Think\Model;
 use Think\Upload\Driver\Ftp;
 
 class UploadController extends BaseController
@@ -25,35 +25,41 @@ class UploadController extends BaseController
     public function upload()
     {
         if (IS_POST) {
-            $ext = end(explode('.', $_FILES['file']['name']));
-            if ($ext != 'xlsx' && $ext != 'xls') {
-                $this->error('请上传Excel的文档！');
-            }
-            $platform_id = $this->platform['platform_id'];
-            if ($this->user['is_admin']) {
-                if (!isset($_POST['platform_id']) || !$_POST['platform_id']) {
-                    $this->error('请选择店铺');
+            $model = new Model();
+            try {
+                $model->startTrans();
+                $ext = end(explode('.', $_FILES['file']['name']));
+                if ($ext != 'xlsx' && $ext != 'xls') {
+                    throw new \Exception('请上传Excel的文档！');
                 }
-                $platform_id = $_POST['platform_id'];
+                $platform_id = $this->platform['platform_id'];
+                if ($this->user['is_admin']) {
+                    if (!isset($_POST['platform_id']) || !$_POST['platform_id']) {
+                        throw new \Exception('请选择店铺');
+                    }
+                    $platform_id = $_POST['platform_id'];
+                }
+                $this->getPlatformData($platform_id);
+                $uploadModel = new UploadModel();
+                $upload = [];
+                $upload['file_name'] = $_FILES['file']['name'];
+                $upload['platform_id'] = $platform_id;
+                $upload['user_id'] = $this->user['user_id'];
+                $upload['save_name'] = date('YmdHis') . rand(10000, 99999) . '.' . $ext;
+                $savePath = APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $upload['save_name'];
+                $this->createDir($savePath);
+                if (move_uploaded_file($_FILES['file']['tmp_name'], $savePath)) {
+                    $uploadModel->create($upload);
+                    $uploadId = $uploadModel->add($uploadModel->data());
+                    $upload['id'] = $uploadId;
+                    $this->upload = $upload;
+                }
+                $this->dataHandle();
+                $model->commit();
+            } catch (\Exception $e) {
+                $model->rollback();
+                $this->error($e->getMessage());
             }
-            $this->getPlatformData($platform_id);
-            $uploadModel = new UploadModel();
-            $upload = [];
-            $upload['file_name'] = $_FILES['file']['name'];
-            $upload['platform_id'] = $platform_id;
-            $upload['user_id'] = $this->user['user_id'];
-            $upload['save_name'] = date('YmdHis') . rand(10000, 99999) . '.' . $ext;
-            $savePath = APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $upload['save_name'];
-            $this->createDir($savePath);
-            if (move_uploaded_file($_FILES['file']['tmp_name'], $savePath)) {
-                $uploadModel->create($upload);
-                $uploadId = $uploadModel->add($uploadModel->data());
-                $upload['id'] = $uploadId;
-                $this->upload = $upload;
-            }
-
-            $this->dataHandle();
-
             $this->redirect('index');
         }
         $this->display();
@@ -182,18 +188,18 @@ class UploadController extends BaseController
         }
         $this->getPlatformData($this->upload['platform_id']);
         if ($this->platform['ftp_need'] == 1) {
-            $this->ftpUpload();
+            $this->ftpSync();
         }
         if ($this->platform['wsdl_need'] == 1) {
             switch ($this->platform['type_code']) {
                 case 'shyfc':
-                    $this->shyfcUpload();
+                    $this->shyfcSync();
                     break;
-                case 'cshyd':
-                    $this->cshydUpload();
+                case 'xtdyc':
+                    $this->xtdycSync();
                     break;
                 default:
-                    $this->wsdlUpload();
+                    $this->wsdlSync();
 
             }
         }
@@ -250,7 +256,7 @@ class UploadController extends BaseController
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值rtn【' . $result['rtn'] . '】' . ' 错误信息：' . $result['errormsg']);
                 }
                 break;
-            case 'cshyd':
+            case 'xtdyc':
                 $result = $this->createRequest('PostSales', json_decode($uploadWsdl['request_data'], true));
                 if (!$result) {
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
@@ -317,8 +323,8 @@ class UploadController extends BaseController
         $reader = null;
         try {
             $reader = \PHPExcel_IOFactory::createReader($renderType);
-        } catch (Exception $e) {
-            $this->error('Excel文件有误！');
+        } catch (\Exception $e) {
+            throw new \Exception('Excel文件有误！');
         }
         $file_name = APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $this->upload['save_name'];
         $PHPExcel = $reader->load($file_name); // 文档名称
@@ -329,27 +335,27 @@ class UploadController extends BaseController
         for ($row = 12; $row <= $highestRow; $row++) {
             $tradeNo = $objWorksheet->getCell('C' . $row)->getValue();
             if (!$this->regularAscii($tradeNo)) {
-                $this->error('【C 列】单据单号 不能是中文');
+                throw new \Exception('【C 列】单据单号 不能是中文');
             }
             $tradeTime = $objWorksheet->getCell('B' . $row)->getValue();
             $tradeTime = strtotime($tradeTime);
             if (!$tradeTime) {
-                $this->error('【B 列】交易时间 格式有误（格式为：2017/11/8 14:36:53）');
+                throw new \Exception('【B 列】交易时间 格式有误（格式为：2017/11/8 14:36:53）');
             }
             $need = [];
             $qty = $objWorksheet->getCell('L' . $row)->getValue();//商品数量
             if (!is_numeric($qty)) {
-                $this->error('【L 列】商品数量必需是整数！');
+                throw new \Exception('【L 列】商品数量必需是整数！');
             }
             $need['itemcode'] = $objWorksheet->getCell('F' . $row)->getValue();//商品编号
 
             $need['originalamount'] = floatval($objWorksheet->getCell('I' . $row)->getValue());//原价
             if (!is_numeric($need['originalamount'])) {
-                $this->error('【I 列】原价必需是数字！');
+                throw new \Exception('【I 列】原价必需是数字！');
             }
             $need['unitamount'] = floatval($objWorksheet->getCell('K' . $row)->getValue());//原价
             if (!is_numeric($need['originalamount'])) {
-                $this->error('【K 列】单价必需是数字！');
+                throw new \Exception('【K 列】单价必需是数字！');
             }
             $need['qty'] = (int)$qty;
             if ($need['qty'] == 0) {
@@ -362,7 +368,7 @@ class UploadController extends BaseController
             $needList[$tradeNo]['tradeNo'] = $tradeNo;
         }
         if (count($needList) == 0) {
-            $this->error('文档记录为空！');
+            throw new \Exception('文档记录为空！');
         }
         iconv("ASCII", "UTF-8//IGNORE", 9);
         if ($this->platform['ftp_need'] == 1) {
@@ -373,8 +379,8 @@ class UploadController extends BaseController
                 case 'shyfc':
                     $this->shyfcDataHandle($needList);
                     break;
-                case 'cshyd':
-                    $this->cshydDataHandle($needList);
+                case 'xtdyc':
+                    $this->xtdycDataHandle($needList);
                     break;
                 default:
                     $this->wsdlDataHandle($needList);
@@ -451,7 +457,7 @@ class UploadController extends BaseController
         $uploadFtpModel = new UploadFtpModel();
         $uploadFtp = $uploadFtpModel->where(['upload_id' => $this->upload['id']])->find();
         if ($uploadFtp) {
-            $this->error('已经存在ftp文件');
+            throw new \Exception('已经存在ftp文件');
         }
         $uploadFtpModel->create([
             'status' => 0,
@@ -462,7 +468,7 @@ class UploadController extends BaseController
     }
 
 
-    private function ftpUpload()
+    private function ftpSync()
     {
         $uploadFtpModel = new UploadFtpModel();
         $uploadFtp = $uploadFtpModel->where(['upload_id' => $this->upload['id']])->find();
@@ -599,7 +605,7 @@ class UploadController extends BaseController
         }
     }
 
-    private function wsdlUpload()
+    private function wsdlSync()
     {
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
@@ -699,10 +705,10 @@ class UploadController extends BaseController
     }
 
     /**
-     * 长沙环宇店数据处理 cshyd
+     * 长沙环宇店数据处理 xtdyc
      * @param $needList
      */
-    private function cshydDataHandle($needList)
+    private function xtdycDataHandle($needList)
     {
         $params = [
             'strCallUserCode' => $this->platformWsdlConf['username'],
@@ -748,7 +754,7 @@ class UploadController extends BaseController
     /**
      * 怡丰城上传 shyfc
      */
-    private function shyfcUpload()
+    private function shyfcSync()
     {
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
@@ -774,9 +780,9 @@ class UploadController extends BaseController
     }
 
     /**
-     * 长沙环宇店上传 cshyd
+     * 长沙环宇店上传 xtdyc
      */
-    private function cshydUpload()
+    private function xtdycSync()
     {
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
