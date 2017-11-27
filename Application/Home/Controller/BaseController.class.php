@@ -112,6 +112,7 @@ class BaseController extends Controller
     {
         try {
             if (!$this->soapClient) {
+                $this->printHandel('创建wsdl');
                 if (strpos($this->platformWsdlConf['wsdl'], 'https://') !== false) {
                     $opts = [
                         'ssl' => [
