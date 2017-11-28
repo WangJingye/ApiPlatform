@@ -21,6 +21,7 @@ class BaseController extends Controller
     public $platformWsdlConf;
     public $platformFtpConf;
 
+    /** @var  \SoapClient $soapClient */
     private $soapClient;
     public $printMessage;
     public $errorCode = 0;
@@ -111,6 +112,7 @@ class BaseController extends Controller
     public function createRequest($function, $arg)
     {
         try {
+
             if (!$this->soapClient) {
                 $this->printHandel('创建wsdl');
                 if (strpos($this->platformWsdlConf['wsdl'], 'https://') !== false) {

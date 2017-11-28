@@ -245,63 +245,61 @@ class UploadController extends BaseController
                 $result = $this->createRequest('processdata', json_decode($uploadWsdl['request_data'], true));
                 if (!$result) {
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
-                    return;
-                }
-                if ($result['rtn'] >= 0) {
-                    $uploadWsdl['status'] = 1;
-                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
                 } else {
-                    $this->errorCode = 1;
-                    $uploadWsdl['status'] = 2;
-                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值rtn【' . $result['rtn'] . '】' . ' 错误信息：' . $result['errormsg']);
+                    if ($result['rtn'] >= 0) {
+                        $uploadWsdl['status'] = 1;
+                        $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
+                    } else {
+                        $this->errorCode = 1;
+                        $uploadWsdl['status'] = 2;
+                        $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值rtn【' . $result['rtn'] . '】' . ' 错误信息：' . $result['errormsg']);
+                    }
                 }
                 break;
             case 'xtdyc':
                 $result = $this->createRequest('PostSales', json_decode($uploadWsdl['request_data'], true));
                 if (!$result) {
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
-                    return;
-                }
-                $rsArray = xml2array($result['PostSalesResult']['any']);
-
-                if ($rsArray['Response']['Result']['ErrorCode'] == 0 || $rsArray['Response']['Result']['ErrorCode'] == -100) {
-                    $uploadWsdl['status'] = 1;
-                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
                 } else {
-                    $this->errorCode = 1;
-                    $uploadWsdl['status'] = 2;
-                    if (is_array($rsArray['Response']['Result']['ErrorMessage'])) {
-                        $error_message = json_encode($rsArray['Response']['Result']['ErrorMessage']);
+                    $rsArray = xml2array($result['PostSalesResult']['any']);
+
+                    if ($rsArray['Response']['Result']['ErrorCode'] == 0 || $rsArray['Response']['Result']['ErrorCode'] == -100) {
+                        $uploadWsdl['status'] = 1;
+                        $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
                     } else {
-                        $error_message = $rsArray['Response']['Result']['ErrorMessage'];
+                        $this->errorCode = 1;
+                        $uploadWsdl['status'] = 2;
+                        if (is_array($rsArray['Response']['Result']['ErrorMessage'])) {
+                            $error_message = json_encode($rsArray['Response']['Result']['ErrorMessage']);
+                        } else {
+                            $error_message = $rsArray['Response']['Result']['ErrorMessage'];
+                        }
+                        $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值【' . $rsArray['Response']['Result']['ErrorCode'] . '】' . ' 错误信息：' . $error_message);
                     }
-                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值【' . $rsArray['Response']['Result']['ErrorCode'] . '】' . ' 错误信息：' . $error_message);
+                    $result = $rsArray;
                 }
-                $result = $rsArray;
                 break;
             default:
                 $result = $this->createRequest('postsalescreate', json_decode($uploadWsdl['request_data'], true));
                 if (!$result) {
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
-                    return;
-                }
-
-                if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == -100) {
-                    $uploadWsdl['status'] = 1;
-                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求成功！');
                 } else {
-                    $this->errorCode = 1;
-                    $uploadWsdl['status'] = 2;
-                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求失败。错误信息:' . $result['postsalescreateResult']['header']['responsemessage']);
+                    if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == -100) {
+                        $uploadWsdl['status'] = 1;
+                        $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求成功！');
+                    } else {
+                        $this->errorCode = 1;
+                        $uploadWsdl['status'] = 2;
+                        $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求失败。错误信息:' . $result['postsalescreateResult']['header']['responsemessage']);
+                    }
                 }
-
         }
         $uploadWsdl['response_data'] = json_encode($result);
         $uploadWsdlModel->create($uploadWsdl);
         $uploadWsdlModel->save($uploadWsdlModel->data());
-        $uploadWsdl = $uploadWsdlModel->where('status !=1 and upload_id=' . $upload['id'])->find();
+        $uploadWsdl = (new UploadWsdlModel())->where(['upload_id' => $upload['id'], 'status' => ['neq', '1']])->find();
         if (!$uploadWsdl) {
-            $upload['status'] = 1;
+            $upload['status'] = '1';
             $uploadModel->create($this->upload);
             $uploadModel->save($uploadModel->data());
         }
@@ -589,7 +587,7 @@ class UploadController extends BaseController
 
             //已存在就不进行请求
             $uploadWsdlModel = new UploadWsdlModel();
-            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo])->find();
+            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo, 'status' => '1'])->find();
             if ($uploadWsdl) {
                 continue;
             }
@@ -688,7 +686,7 @@ class UploadController extends BaseController
             $params['inputpara'] = implode(',', $inputpara);
             $params['rtn'] = 0;
             $uploadWsdlModel = new UploadWsdlModel();
-            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo])->find();
+            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo, 'status' => '1'])->find();
             if ($uploadWsdl) {
                 continue;
             }
@@ -734,7 +732,7 @@ class UploadController extends BaseController
             $params['strTenderCode'] = sprintf('{CH,%s,0,0}', $totalNetAmount);
             $params['strItems'] = sprintf('{%s,%s,%s}', $this->platformWsdlConf['itemcode'], $totalNetAmount > 0 ? 1 : -1, $totalNetAmount);
             $uploadWsdlModel = new UploadWsdlModel();
-            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo])->find();
+            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo, 'status' => 1])->find();
             if ($uploadWsdl) {
                 continue;
             }
@@ -743,7 +741,7 @@ class UploadController extends BaseController
                 'trade_no' => $tradeNo,
                 'netamount' => $totalNetAmount,
                 'request_data' => json_encode($params),
-                'qty' => $totalNetAmount > 0 ? 1:-1,
+                'qty' => $totalNetAmount > 0 ? 1 : -1,
                 'status' => 0
             ]);
             $uploadWsdlModel->add($uploadWsdlModel->data());
