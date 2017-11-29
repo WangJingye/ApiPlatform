@@ -300,7 +300,7 @@ class UploadController extends BaseController
         $uploadWsdl = (new UploadWsdlModel())->where(['upload_id' => $upload['id'], 'status' => ['neq', '1']])->find();
         if (!$uploadWsdl) {
             $upload['status'] = '1';
-            $uploadModel->create($this->upload);
+            $uploadModel->create($upload);
             $uploadModel->save($uploadModel->data());
         }
 
