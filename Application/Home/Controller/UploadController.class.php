@@ -587,10 +587,6 @@ class UploadController extends BaseController
 
             //已存在就不进行请求
             $uploadWsdlModel = new UploadWsdlModel();
-            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo, 'status' => '1'])->find();
-            if ($uploadWsdl) {
-                continue;
-            }
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
@@ -696,10 +692,7 @@ class UploadController extends BaseController
             $params['inputpara'] = implode(',', $inputpara);
             $params['rtn'] = 0;
             $uploadWsdlModel = new UploadWsdlModel();
-            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo, 'status' => '1'])->find();
-            if ($uploadWsdl) {
-                continue;
-            }
+
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
@@ -742,10 +735,6 @@ class UploadController extends BaseController
             $params['strTenderCode'] = sprintf('{CH,%s,0,0}', $totalNetAmount);
             $params['strItems'] = sprintf('{%s,%s,%s}', $this->platformWsdlConf['itemcode'], $totalNetAmount > 0 ? 1 : -1, $totalNetAmount);
             $uploadWsdlModel = new UploadWsdlModel();
-            $uploadWsdl = $uploadWsdlModel->where(['trade_no' => $tradeNo, 'status' => 1])->find();
-            if ($uploadWsdl) {
-                continue;
-            }
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
