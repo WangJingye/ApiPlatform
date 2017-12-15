@@ -607,6 +607,10 @@ class UploadController extends BaseController
     {
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
+        if (!count($uploadWsdlList)) {
+            $this->printHandel('不存在单据记录');
+            return;
+        }
         foreach ($uploadWsdlList as $uploadWsdl) {
             $this->printHandel('请求接口,交易单号:' . $uploadWsdl['trade_no'] . ' ...');
             $otherUpload = $uploadWsdlModel->where(['trade_no' => $uploadWsdl['trade_no'], 'status' => '1'])->find();
@@ -762,6 +766,10 @@ class UploadController extends BaseController
     {
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
+        if (!count($uploadWsdlList)) {
+            $this->printHandel('不存在单据记录');
+            return;
+        }
         foreach ($uploadWsdlList as $uploadWsdl) {
             $this->printHandel('请求接口,交易单号:' . $uploadWsdl['trade_no'] . ' ...');
             $otherUpload = $uploadWsdlModel->where(['trade_no' => $uploadWsdl['trade_no'], 'status' => '1'])->find();
@@ -799,6 +807,10 @@ class UploadController extends BaseController
     {
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
+        if (!count($uploadWsdlList)) {
+            $this->printHandel('不存在单据记录');
+            return;
+        }
         foreach ($uploadWsdlList as $uploadWsdl) {
             $this->printHandel('请求接口,交易单号:' . $uploadWsdl['trade_no'] . ' ...');
             $otherUpload = $uploadWsdlModel->where(['trade_no' => $uploadWsdl['trade_no'], 'status' => '1'])->find();
