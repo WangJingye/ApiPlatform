@@ -620,7 +620,7 @@ class UploadController extends BaseController
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
                     continue;
                 }
-                if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == -100) {
+                if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == -100 || (strpos($result['postsalescreateResult']['header']['responsemessage'], 'exists') !== false)) {
                     $uploadWsdl['status'] = 1;
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求成功！');
                 } else {
