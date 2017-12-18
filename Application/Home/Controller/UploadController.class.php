@@ -263,7 +263,7 @@ class UploadController extends BaseController
                 } else {
                     $rsArray = xml2array($result['PostSalesResult']['any']);
 
-                    if ($rsArray['Response']['Result']['ErrorCode'] == 0 || $rsArray['Response']['Result']['ErrorCode'] == -100) {
+                    if ($rsArray['Response']['Result']['ErrorCode'] == 0 || $rsArray['Response']['Result']['ErrorCode'] == -100 || (strpos($result['postsalescreateResult']['header']['responsemessage'], 'exists') !== false)) {
                         $uploadWsdl['status'] = 1;
                         $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
                     } else {
@@ -284,7 +284,7 @@ class UploadController extends BaseController
                 if (!$result) {
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
                 } else {
-                    if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == -100) {
+                    if ($result['postsalescreateResult']['header']['responsecode'] == 0 || $result['postsalescreateResult']['header']['responsecode'] == -100 || (strpos($result['postsalescreateResult']['header']['responsemessage'], 'exists') !== false)) {
                         $uploadWsdl['status'] = 1;
                         $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求成功！');
                     } else {
