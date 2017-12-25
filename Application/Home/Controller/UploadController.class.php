@@ -85,6 +85,9 @@ class UploadController extends BaseController
         if ($page > $totalPage) {
             $page = $totalPage;
         }
+        if ($page < 1) {
+            $page = 1;
+        }
         $selector = $uploadModel->table('upload as a')->join('left join platform as b on b.platform_id=a.platform_id')->where($where);
         $list = $selector->field('a.id,b.platform_name,a.file_name,a.status,a.create_time,b.ftp_need,b.wsdl_need')->order('a.create_time desc')
             ->limit(($perPage * ($page - 1)) . ',' . $perPage)->select();
