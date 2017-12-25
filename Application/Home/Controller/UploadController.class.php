@@ -85,6 +85,7 @@ class UploadController extends BaseController
         if ($page > $totalPage) {
             $page = $totalPage;
         }
+
         if ($page < 1) {
             $page = 1;
         }
