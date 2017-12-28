@@ -137,6 +137,7 @@ class BaseController extends Controller
                 }
             }
             $this->soapClient->__setLocation($this->platformWsdlConf['wsdl']);
+            $this->log->sysLog(json_encode($arg));
             $result = $this->soapClient->$function($arg);
             $result = json_decode(json_encode($result), true);
             $this->log->sysLog(json_encode($result));
