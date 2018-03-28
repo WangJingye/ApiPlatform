@@ -54,7 +54,13 @@ class UploadController extends BaseController
                     $upload['id'] = $uploadId;
                     $this->upload = $upload;
                 }
-                $this->dataHandle();
+                switch ($this->platform['type_code']) {
+                    case 'lnfyd':
+                        $this->lnfydDataHandle();
+                        break;
+                    default:
+                        $this->dataHandle();
+                }
                 $model->commit();
             } catch (\Exception $e) {
                 $model->rollback();
@@ -351,11 +357,11 @@ class UploadController extends BaseController
             }
             $need['itemcode'] = $objWorksheet->getCell('F' . $row)->getValue();//商品编号
 
-            $need['originalamount'] = floatval($objWorksheet->getCell('I' . $row)->getValue());//原价
+            $need['originalamount'] = round(floatval($objWorksheet->getCell('I' . $row)->getValue()), 2);//原价
             if (!is_numeric($need['originalamount'])) {
                 throw new \Exception('【I 列】原价必需是数字！');
             }
-            $need['unitamount'] = floatval($objWorksheet->getCell('K' . $row)->getValue());//原价
+            $need['unitamount'] = round(floatval($objWorksheet->getCell('K' . $row)->getValue()), 2);//原价
             if (!is_numeric($need['originalamount'])) {
                 throw new \Exception('【K 列】单价必需是数字！');
             }
@@ -364,7 +370,7 @@ class UploadController extends BaseController
                 continue;
             }
             $need['originalamount'] = $need['originalamount'] * $need['qty'];
-            $need['netamount'] = floatval($objWorksheet->getCell('M' . $row)->getValue());//付款金额
+            $need['netamount'] = round(floatval($objWorksheet->getCell('M' . $row)->getValue()), 2);//付款金额
             $needList[$tradeNo]['itemList'][] = $need;
             $needList[$tradeNo]['tradeTime'] = $tradeTime;
             $needList[$tradeNo]['tradeNo'] = $tradeNo;
@@ -390,6 +396,79 @@ class UploadController extends BaseController
             }
         }
 
+    }
+
+    /**
+     * 鲁能飞鹰店xlsx格式不同，数据单独处理
+     */
+    private function lnfydDataHandle()
+    {
+        $ext = end(explode('.', $this->upload['save_name']));
+        if ($ext == 'xlsx') {
+            $renderType = 'Excel2007';
+        } else {
+            $renderType = 'Excel5';
+        }
+        $this->getPlatformData($this->upload['platform_id']);
+        import("Org.Util.PHPExcel");
+
+        import("Org.Util.PHPExcel.IOFactory");
+        $reader = null;
+        try {
+            $reader = \PHPExcel_IOFactory::createReader($renderType);
+        } catch (\Exception $e) {
+            throw new \Exception('Excel文件有误！');
+        }
+        $file_name = APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $this->upload['save_name'];
+        $PHPExcel = $reader->load($file_name); // 文档名称
+        $objWorksheet = $PHPExcel->getActiveSheet();
+        $highestRow = $objWorksheet->getHighestRow();
+        //获取excel数据
+        $needList = [];
+        for ($row = 15; $row <= $highestRow; $row++) {
+            $tradeNo = $objWorksheet->getCell('A' . $row)->getValue();
+            if (!$tradeNo) {
+                continue;
+            }
+            if (!$this->regularAscii($tradeNo)) {
+                throw new \Exception('【C 列】单据单号 不能是中文');
+            }
+            $tradeTime = $objWorksheet->getCell('B' . $row)->getValue();
+            $tradeTime = strtotime($tradeTime);
+            if (!$tradeTime) {
+                throw new \Exception('【B 列】交易时间 格式有误（格式为：2017-11-08 14:36:53）');
+            }
+            $need = [];
+            $need['qty'] = 1;
+            $need['itemcode'] = $objWorksheet->getCell('J' . $row)->getValue();//商品编号
+
+            $need['originalamount'] = round(floatval($objWorksheet->getCell('X' . $row)->getValue()), 2);//原价
+            if (!is_numeric($need['originalamount'])) {
+                throw new \Exception('【X 列】原价必需是数字！');
+            }
+            $need['unitamount'] = round(floatval($objWorksheet->getCell('Y' . $row)->getValue()), 2);//原价
+            if (!is_numeric($need['originalamount'])) {
+                throw new \Exception('【Y 列】单价必需是数字！');
+            }
+            $need['netamount'] = round(floatval($objWorksheet->getCell('AE' . $row)->getValue()), 2);//付款金额
+            $need['originalamount'] = $need['netamount'];
+            if ($need['netamount'] < 0) {
+                $need['qty'] = -1;
+            }
+            $needList[$tradeNo]['itemList'][] = $need;
+            $needList[$tradeNo]['tradeTime'] = $tradeTime;
+            $needList[$tradeNo]['tradeNo'] = $tradeNo;
+        }
+        if (count($needList) == 0) {
+            throw new \Exception('文档记录为空！');
+        }
+        iconv("ASCII", "UTF-8//IGNORE", 9);
+        if ($this->platform['ftp_need'] == 1) {
+            $this->ftpDataHandle($needList);
+        }
+        if ($this->platform['wsdl_need'] == 1) {
+            $this->wsdlDataHandle($needList);
+        }
     }
 
     private function ftpDataHandle($needList)
