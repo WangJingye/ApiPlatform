@@ -29,7 +29,7 @@ class UploadController extends BaseController
             try {
                 $model->startTrans();
                 $ext = end(explode('.', $_FILES['file']['name']));
-                if ($ext != 'xlsx' && $ext != 'xls') {
+                if ($ext != 'xlsx' && $ext != 'xls' && $ext != 'csv') {
                     throw new \Exception('请上传Excel的文档！');
                 }
                 $platform_id = $this->platform['platform_id'];
@@ -316,12 +316,55 @@ class UploadController extends BaseController
 
     }
 
+    /**
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \Think\Exception
+     */
     private function dataHandle()
+    {
+        $ext = end(explode('.', $this->upload['save_name']));
+        if ($ext == 'csv') {
+            $needList = $this->parseCSV();
+        } else {
+            $needList = $this->parseXLS();
+        }
+
+        if (count($needList) == 0) {
+            throw new \Exception('文档记录为空！');
+        }
+        iconv("ASCII", "UTF-8//IGNORE", 9);
+        if ($this->platform['ftp_need'] == 1) {
+            $this->ftpDataHandle($needList);
+        }
+        if ($this->platform['wsdl_need'] == 1) {
+            switch ($this->platform['type_code']) {
+                case 'shyfc':
+                    $this->shyfcDataHandle($needList);
+                    break;
+                case 'xtdyc':
+                    $this->xtdycDataHandle($needList);
+                    break;
+                default:
+                    $this->wsdlDataHandle($needList);
+
+            }
+        }
+
+    }
+
+    /**
+     * @return array
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \Think\Exception
+     */
+    private function parseXLS()
     {
         $ext = end(explode('.', $this->upload['save_name']));
         if ($ext == 'xlsx') {
             $renderType = 'Excel2007';
-        } else {
+        } else if ($ext == 'xls') {
             $renderType = 'Excel5';
         }
         $this->getPlatformData($this->upload['platform_id']);
@@ -355,8 +398,6 @@ class UploadController extends BaseController
             if (!is_numeric($qty)) {
                 throw new \Exception('【L 列】商品数量必需是整数！');
             }
-            $need['itemcode'] = $objWorksheet->getCell('F' . $row)->getValue();//商品编号
-
             $need['originalamount'] = round(floatval($objWorksheet->getCell('I' . $row)->getValue()), 2);//原价
             if (!is_numeric($need['originalamount'])) {
                 throw new \Exception('【I 列】原价必需是数字！');
@@ -375,27 +416,64 @@ class UploadController extends BaseController
             $needList[$tradeNo]['tradeTime'] = $tradeTime;
             $needList[$tradeNo]['tradeNo'] = $tradeNo;
         }
-        if (count($needList) == 0) {
-            throw new \Exception('文档记录为空！');
-        }
-        iconv("ASCII", "UTF-8//IGNORE", 9);
-        if ($this->platform['ftp_need'] == 1) {
-            $this->ftpDataHandle($needList);
-        }
-        if ($this->platform['wsdl_need'] == 1) {
-            switch ($this->platform['type_code']) {
-                case 'shyfc':
-                    $this->shyfcDataHandle($needList);
-                    break;
-                case 'xtdyc':
-                    $this->xtdycDataHandle($needList);
-                    break;
-                default:
-                    $this->wsdlDataHandle($needList);
+        return $needList;
+    }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    private function parseCSV()
+    {
+        $file_name = APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $this->upload['save_name'];
+        $handle = fopen($file_name, "r");
+        $i = 0;
+        $needList = [];
+        while ($data = fgetcsv($handle, 1000, ",")) {
+            if ($i == 0) {
+                $i++;
+                continue;
             }
+            $tradeNo = str_replace('"', '', trim($data[1], '='));
+            if (!$this->regularAscii($tradeNo)) {
+                throw new \Exception('单据单号 不能是中文');
+            }
+            $tradeTime = str_replace('"', '', trim($data[0], '='));
+            $tradeTime = strtotime($tradeTime);
+            if (!$tradeTime) {
+                throw new \Exception('交易时间 格式有误（格式为：2017/11/8 14:36:53）');
+            }
+            $qty = str_replace('"', '', trim($data[7], '='));
+            if (!is_numeric($qty)) {
+                throw new \Exception('商品数量必需是整数！');
+            }
+            if ($qty == 0) {
+                continue;
+            }
+            $originalamount = round(floatval(str_replace('"', '', trim($data[4], '='))), 2);
+            if (!is_numeric($originalamount)) {
+                throw new \Exception('原价必需是数字！');
+            }
+            $netamount = round(floatval(str_replace('"', '', trim($data[8], '='))), 2);
+            if (!is_numeric($originalamount)) {
+                throw new \Exception('付款金额必需是数字！');
+            }
+            $unitamount = round(floatval(str_replace('"', '', trim($data[6], '='))), 2);
+            if (!is_numeric($unitamount)) {
+                throw new \Exception('货品单价必需是数字！');
+            }
+            $originalamount = $originalamount * $qty;
+            $needList[$tradeNo]['itemList'][] = [
+                'originalamount' => $originalamount,
+                'unitamount' => $unitamount,
+                'netamount' => $netamount,
+                'qty' => (int)$qty,
+            ];
+            $needList[$tradeNo]['tradeTime'] = $tradeTime;
+            $needList[$tradeNo]['tradeNo'] = $tradeNo;
         }
-
+        fclose($handle);
+        return $needList;
     }
 
     /**

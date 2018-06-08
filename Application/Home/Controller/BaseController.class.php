@@ -68,6 +68,10 @@ class BaseController extends Controller
         }
     }
 
+    /**
+     * @param $platform_id
+     * @throws Exception
+     */
     public function getPlatformData($platform_id)
     {
         $this->platform = (new PlatformModel())->where(['platform_id' => $platform_id])->find();
