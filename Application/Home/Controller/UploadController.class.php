@@ -7,6 +7,7 @@ use Common\Common\Log;
 use Common\Model\UploadFtpModel;
 use Common\Model\UploadModel;
 use Common\Model\UploadWsdlModel;
+use Think\Exception;
 use Think\Model;
 use Think\Upload\Driver\Ftp;
 
@@ -41,6 +42,10 @@ class UploadController extends BaseController
                 }
                 $this->getPlatformData($platform_id);
                 $uploadModel = new UploadModel();
+                $upload = $uploadModel->where(['platform_id' => $platform_id, 'status' => 0])->find();
+                if ($upload) {
+                   throw new \Exception('有未完成的单据记录，请完成后再上传');
+                }
                 $upload = [];
                 $upload['file_name'] = $_FILES['file']['name'];
                 $upload['platform_id'] = $platform_id;
@@ -290,6 +295,22 @@ class UploadController extends BaseController
                     $result = $rsArray;
                 }
                 break;
+            case 'asq':
+                $result = $this->createRequest('TrasAdd', json_decode($uploadWsdl['request_data'], true));
+                if (!$result) {
+                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
+                    return;
+                }
+                if ($result['TrasAddResult']) {
+                    $uploadWsdl['status'] = 1;
+                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
+                } else {
+                    $this->errorCode = 1;
+                    $uploadWsdl['status'] = 2;
+                    $error_message = json_encode($result);
+                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值【' . $result['Response']['Result']['ErrorCode'] . '】' . ' 错误信息：' . $error_message);
+                }
+                break;
             default:
                 $result = $this->createRequest('postsalescreate', json_decode($uploadWsdl['request_data'], true));
                 if (!$result) {
@@ -480,6 +501,78 @@ class UploadController extends BaseController
         return $needList;
     }
 
+    /**
+     * 鲁能飞鹰店xlsx格式不同，数据单独处理
+     */
+    private function lnfydDataHandle()
+    {
+        $ext = end(explode('.', $this->upload['save_name']));
+        if ($ext == 'xlsx') {
+            $renderType = 'Excel2007';
+        } else {
+            $renderType = 'Excel5';
+        }
+        $this->getPlatformData($this->upload['platform_id']);
+        import("Org.Util.PHPExcel");
+
+        import("Org.Util.PHPExcel.IOFactory");
+        $reader = null;
+        try {
+            $reader = \PHPExcel_IOFactory::createReader($renderType);
+        } catch (\Exception $e) {
+            throw new \Exception('Excel文件有误！');
+        }
+        $file_name = APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $this->upload['save_name'];
+        $PHPExcel = $reader->load($file_name); // 文档名称
+        $objWorksheet = $PHPExcel->getActiveSheet();
+        $highestRow = $objWorksheet->getHighestRow();
+        //获取excel数据
+        $needList = [];
+        for ($row = 15; $row <= $highestRow; $row++) {
+            $tradeNo = $objWorksheet->getCell('A' . $row)->getValue();
+            if (!$tradeNo) {
+                continue;
+            }
+            if (!$this->regularAscii($tradeNo)) {
+                throw new \Exception('【C 列】单据单号 不能是中文');
+            }
+            $tradeTime = $objWorksheet->getCell('B' . $row)->getValue();
+            $tradeTime = strtotime($tradeTime);
+            if (!$tradeTime) {
+                throw new \Exception('【B 列】交易时间 格式有误（格式为：2017-11-08 14:36:53）');
+            }
+            $need = [];
+            $need['qty'] = 1;
+            $need['itemcode'] = $objWorksheet->getCell('J' . $row)->getValue();//商品编号
+
+            $need['originalamount'] = round(floatval($objWorksheet->getCell('X' . $row)->getValue()), 2);//原价
+            if (!is_numeric($need['originalamount'])) {
+                throw new \Exception('【X 列】原价必需是数字！');
+            }
+            $need['unitamount'] = round(floatval($objWorksheet->getCell('Y' . $row)->getValue()), 2);//原价
+            if (!is_numeric($need['originalamount'])) {
+                throw new \Exception('【Y 列】单价必需是数字！');
+            }
+            $need['netamount'] = round(floatval($objWorksheet->getCell('AE' . $row)->getValue()), 2);//付款金额
+            $need['originalamount'] = $need['netamount'];
+            if ($need['netamount'] < 0) {
+                $need['qty'] = -1;
+            }
+            $needList[$tradeNo]['itemList'][] = $need;
+            $needList[$tradeNo]['tradeTime'] = $tradeTime;
+            $needList[$tradeNo]['tradeNo'] = $tradeNo;
+        }
+        if (count($needList) == 0) {
+            throw new \Exception('文档记录为空！');
+        }
+        iconv("ASCII", "UTF-8//IGNORE", 9);
+        if ($this->platform['ftp_need'] == 1) {
+            $this->ftpDataHandle($needList);
+        }
+        if ($this->platform['wsdl_need'] == 1) {
+            $this->wsdlDataHandle($needList);
+        }
+    }
 
     private function ftpDataHandle($needList)
     {
