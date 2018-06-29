@@ -790,6 +790,7 @@ class UploadController extends BaseController
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
         if (!count($uploadWsdlList)) {
+            $this->errorCode = 1;
             $this->printHandel('不存在单据记录');
             return;
         }
@@ -997,6 +998,7 @@ class UploadController extends BaseController
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
         if (!count($uploadWsdlList)) {
+            $this->errorCode = 1;
             $this->printHandel('不存在单据记录');
             return;
         }
@@ -1038,6 +1040,7 @@ class UploadController extends BaseController
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
         if (!count($uploadWsdlList)) {
+            $this->errorCode = 1;
             $this->printHandel('不存在单据记录');
             return;
         }
@@ -1082,6 +1085,7 @@ class UploadController extends BaseController
         $uploadWsdlModel = new UploadWsdlModel();
         $uploadWsdlList = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1')->select();
         if (!count($uploadWsdlList)) {
+            $this->errorCode = 1;
             $this->printHandel('不存在单据记录');
             return;
         }
