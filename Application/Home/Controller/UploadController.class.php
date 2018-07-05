@@ -44,7 +44,7 @@ class UploadController extends BaseController
                 $uploadModel = new UploadModel();
                 $upload = $uploadModel->where(['platform_id' => $platform_id, 'status' => 0])->find();
                 if ($upload) {
-                   throw new \Exception('有未完成的单据记录，请完成后再上传');
+                    throw new \Exception('有未完成的单据记录，请完成后再上传');
                 }
                 $upload = [];
                 $upload['file_name'] = $_FILES['file']['name'];
@@ -146,17 +146,34 @@ class UploadController extends BaseController
             }
         }
         $this->getPlatformData($upload['platform_id']);
-        unlink(APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $upload['save_name']);
-        $uploadModel->where(['id' => $_GET['id']])->delete();
-        $uploadFtpModel = new UploadFtpModel();
-        $uploadFtp = $uploadFtpModel->where(['upload_id' => $upload['id']])->find();
-        if ($uploadFtp) {
-            $uploadFtpModel->where(['upload_id' => $upload['id']])->delete();
-            $file_name = APP_PATH . 'FtpFile/' . $this->platform['type_code'] . '/' . $uploadFtp['filename'];
-            unlink($file_name);
+        if ($this->platform['wsdl_need']) {
+            $uploadWsdlModel = new UploadWsdlModel();
+            $uploadWsdlModel->where(['upload_id' => $upload['id']])->where('status=0')->delete();
         }
-        $uploadWsdlModel = new UploadWsdlModel();
-        $uploadWsdlModel->where(['upload_id' => $upload['id']])->delete();
+
+        if ($this->platform['wsdl_need']) {
+            $wsdlList = $uploadWsdlModel->where(['upload_id' => $upload['id']])->where('status!=0')->select();
+            if (!count($wsdlList)) {
+                $uploadWsdlModel = new UploadWsdlModel();
+                $uploadWsdlModel->where(['upload_id' => $upload['id']])->where('status=0')->delete();
+                unlink(APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $upload['save_name']);
+                $uploadModel->where(['id' => $_GET['id']])->delete();
+            }else{
+                $this->error('已执行的记录不允许删除！');
+            }
+        } else if ($this->platform['ftp']) {
+            $uploadFtpModel = new UploadFtpModel();
+            $uploadFtp = $uploadFtpModel->where(['upload_id' => $upload['id']])->find();
+            if ($uploadFtp) {
+                $uploadFtpModel->where(['upload_id' => $upload['id']])->delete();
+                $file_name = APP_PATH . 'FtpFile/' . $this->platform['type_code'] . '/' . $uploadFtp['filename'];
+                unlink($file_name);
+            }
+            unlink(APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $upload['save_name']);
+            $uploadModel->where(['id' => $_GET['id']])->delete();
+        }
+
+
         $this->redirect('index');
 
     }
@@ -776,6 +793,7 @@ class UploadController extends BaseController
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
+                'trade_date' => date('Y-m-d', $need['tradeTime']),
                 'netamount' => $totalNetAmount,
                 'request_data' => json_encode(['astr_request' => $params]),
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
@@ -883,6 +901,7 @@ class UploadController extends BaseController
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
+                'trade_date' => date('Y-m-d', $need['tradeTime']),
                 'netamount' => $totalNetAmount,
                 'request_data' => json_encode($params),
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
@@ -925,6 +944,7 @@ class UploadController extends BaseController
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
+                'trade_date' => date('Y-m-d', $need['tradeTime']),
                 'netamount' => $totalNetAmount,
                 'request_data' => json_encode($params),
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
@@ -947,11 +967,18 @@ class UploadController extends BaseController
             $this->error('数据有误,请重新上传');
         }
         $uploadIdList = array_column($uploadList, 'id');
-        $last = $uploadWsdlModel->where('upload_id in (' . implode(',', $uploadIdList) . ')')->order('sort desc')->find();
+        foreach ($needList as $tradeNo => $need) {
+            $tradeDate = date('Y-m-d', $need['tradeTime']);
+            break;
+        }
+        $last = $uploadWsdlModel->where('upload_id in (' . implode(',', $uploadIdList) . ')')
+            ->where(['trade_date' => $tradeDate])
+            ->order('sort desc')->find();
         $count = 0;
         if ($last) {
             $count = $last['sort'];
         }
+        $flag = 1;
         foreach ($needList as $tradeNo => $need) {
             $params = [];
             $totalOriginalAmount = 0;
@@ -969,7 +996,7 @@ class UploadController extends BaseController
             $params['transStr'] = implode(',', [
                 $this->platformWsdlConf['mallid'],//商铺编号
                 $this->platformWsdlConf['tillid'],//POS 编号
-                date('ymd') . str_pad($count, '4', '0', STR_PAD_LEFT),
+                date('ymd', $need['tradeTime']) . str_pad($count, '4', '0', STR_PAD_LEFT),
                 $this->platformWsdlConf['storecode'],//商品编码
                 $this->platformWsdlConf['itemcode'],//商品名称
                 $totalNetAmount,//交易金额
@@ -979,13 +1006,20 @@ class UploadController extends BaseController
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
+                'trade_date' => date('Y-m-d', $need['tradeTime']),
                 'netamount' => $totalNetAmount,
                 'request_data' => json_encode($params),
                 'sort' => $count,
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
                 'status' => 0
             ]);
-            $uploadWsdlModel->add($uploadWsdlModel->data());
+            $addStatus = $uploadWsdlModel->add($uploadWsdlModel->data());
+            if ($addStatus) {
+                $flag = 0;
+            }
+        }
+        if ($flag == 1) {
+            throw new Exception('单据数据均已存在，请勿再次上传');
         }
     }
 
