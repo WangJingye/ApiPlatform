@@ -199,6 +199,7 @@ class UploadController extends BaseController
 
     public function complete()
     {
+        set_time_limit(0);
         ob_clean();
         if (!isset($_GET['id']) || !$_GET['id']) {
             $this->printHandel('参数有误！');
