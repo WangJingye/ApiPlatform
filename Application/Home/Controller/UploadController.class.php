@@ -1141,13 +1141,12 @@ class UploadController extends BaseController
                 if (isset($result['TrasAddResult'])) {
                     $uploadWsdl['status'] = 1;
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
+                } else {
+                    $this->errorCode = 1;
+                    $uploadWsdl['status'] = 2;
+                    $error_message = json_encode($result);
+                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值【' . $result['Response']['Result']['ErrorCode'] . '】' . ' 错误信息：' . $error_message);
                 }
-//                else {
-//                    $this->errorCode = 1;
-//                    $uploadWsdl['status'] = 2;
-//                    $error_message = json_encode($result);
-//                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值【' . $result['Response']['Result']['ErrorCode'] . '】' . ' 错误信息：' . $error_message);
-//                }
             }
             $uploadWsdl['response_data'] = json_encode($result);
             $uploadWsdlModel->create($uploadWsdl);
