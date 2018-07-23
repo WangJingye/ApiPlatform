@@ -148,16 +148,11 @@ class UploadController extends BaseController
         $this->getPlatformData($upload['platform_id']);
         if ($this->platform['wsdl_need']) {
             $uploadWsdlModel = new UploadWsdlModel();
-            $uploadWsdlModel->where(['upload_id' => $upload['id']])->where('status=0')->delete();
-        }
-
-        if ($this->platform['wsdl_need']) {
             $wsdlList = $uploadWsdlModel->where(['upload_id' => $upload['id']])->where('status!=0')->select();
             if (!count($wsdlList)) {
-                $uploadWsdlModel = new UploadWsdlModel();
                 $uploadWsdlModel->where(['upload_id' => $upload['id']])->where('status=0')->delete();
                 unlink(APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $upload['save_name']);
-                $uploadModel->where(['id' => $_GET['id']])->delete();
+                $uploadModel->where(['id' => $upload['id']])->delete();
             }else{
                 $this->error('已执行的记录不允许删除！');
             }
