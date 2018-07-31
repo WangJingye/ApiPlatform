@@ -156,7 +156,7 @@ class UploadController extends BaseController
             }else{
                 $this->error('已执行的记录不允许删除！');
             }
-        } else if ($this->platform['ftp']) {
+        } else if ($this->platform['ftp_need']) {
             $uploadFtpModel = new UploadFtpModel();
             $uploadFtp = $uploadFtpModel->where(['upload_id' => $upload['id']])->find();
             if ($uploadFtp) {
