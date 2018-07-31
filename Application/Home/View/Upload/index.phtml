@@ -30,8 +30,10 @@
                     <a onClick="javascript:window.open('<?= U('Home/Upload/complete', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
                        href="#" target="_blank" class="btn btn-sm btn-primary"><i
                                 class="glyphicon glyphicon-refresh"></i> 立即同步</a>
+                    <?php if($user['user_id']==1){?>
                     <a href="<?= U('Home/Upload/delete', ['id' => $v['id']]) ?>"
                        class="btn btn-sm btn-default"><i class="glyphicon glyphicon-remove"></i> 删除</a>
+                    <?php }?>
                 <?php } ?>
                 <?php if ($v['status'] == 1) { ?>
                     <a onClick="javascript:window.open('<?= U('Home/Upload/seeLog', ['id' => $v['id']]) ?>','','width=632,height=388,toolbar=no, status=no, menubar=no, resizable=yes, scrollbars=yes');return false;"
