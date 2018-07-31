@@ -426,10 +426,14 @@ class UploadController extends BaseController
             if (!$this->regularAscii($tradeNo)) {
                 throw new \Exception('【C 列】单据单号 不能是中文');
             }
-            $tradeTime = $objWorksheet->getCell('B' . $row)->getValue();
-            $tradeTime = strtotime($tradeTime);
+            $tradeDate = $objWorksheet->getCell('B' . $row)->getValue();
+            $tradeTime = strtotime($tradeDate);
             if (!$tradeTime) {
                 throw new \Exception('【B 列】交易时间 格式有误（格式为：2017/11/8 14:36:53）');
+            }
+            //判断是不是只有日期
+            if (date('Ymd', $tradeTime) == $tradeDate) {
+                $tradeTime = $tradeTime + 12 * 3600;
             }
             $need = [];
             $qty = $objWorksheet->getCell('L' . $row)->getValue();//商品数量
@@ -480,6 +484,10 @@ class UploadController extends BaseController
             $tradeTime = strtotime($tradeDate);
             if (!$tradeTime) {
                 throw new \Exception('交易时间 格式有误（格式为：2017/11/8 14:36:53）');
+            }
+            //判断是不是只有日期
+            if (date('Ymd', $tradeTime) == $tradeDate) {
+                $tradeTime = $tradeTime + 12 * 3600;
             }
             $qty = str_replace('"', '', trim($data[7], '='));
             if (!is_numeric($qty)) {
@@ -549,10 +557,14 @@ class UploadController extends BaseController
             if (!$this->regularAscii($tradeNo)) {
                 throw new \Exception('【C 列】单据单号 不能是中文');
             }
-            $tradeTime = $objWorksheet->getCell('B' . $row)->getValue();
-            $tradeTime = strtotime($tradeTime);
+            $tradeDate = $objWorksheet->getCell('B' . $row)->getValue();
+            $tradeTime = strtotime($tradeDate);
             if (!$tradeTime) {
                 throw new \Exception('【B 列】交易时间 格式有误（格式为：2017-11-08 14:36:53）');
+            }
+            //判断是不是只有日期
+            if (date('Ymd', $tradeTime) == $tradeDate) {
+                $tradeTime = $tradeTime + 12 * 3600;
             }
             $need = [];
             $need['qty'] = 1;
