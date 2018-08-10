@@ -130,3 +130,26 @@ function xml2array($contents, $get_attributes=1, $priority = 'tag')
 
     return($xml_array);
 }
+
+function array2sql($tableName, $data, $type = 'insert', $condition = '')
+{
+    if (empty($data)) {
+        return '';
+    }
+    if ($type == 'insert') {
+        foreach ($data as $k => $v) {
+            $data[$k] = str_replace('"', '\\"', str_replace('\\', '\\\\', $v));
+        }
+        $sql = 'insert into ' . $tableName . ' (`' . implode('`,`', array_keys($data)) . '`) values ("' . implode('","', array_values($data)) . '");';
+    } else {
+        $fields = [];
+        foreach ($data as $key => $value) {
+            $fields[] = '`' . $key . '`="' . str_replace('"', '\\"', str_replace('\\', '\\\\', $value)) . '"';
+        }
+        if ($condition) {
+            $condition = ' where ' . $condition;
+        }
+        $sql = 'update ' . $tableName . ' set ' . implode(',', $fields) . $condition.';';
+    }
+    return $sql;
+}

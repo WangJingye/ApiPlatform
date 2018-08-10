@@ -9,11 +9,14 @@ use Common\Model\UploadModel;
 use Common\Model\UploadWsdlModel;
 use Think\Exception;
 use Think\Model;
+use Think\Think;
 use Think\Upload\Driver\Ftp;
 
 class UploadController extends BaseController
 {
     public $upload;
+    /** @var Model */
+    public $model;
 
 
     public function __construct()
@@ -26,9 +29,9 @@ class UploadController extends BaseController
     public function upload()
     {
         if (IS_POST) {
-            $model = new Model();
+            $this->model = M();
             try {
-                $model->startTrans();
+                $this->model->startTrans();
                 $ext = end(explode('.', $_FILES['file']['name']));
                 if ($ext != 'xlsx' && $ext != 'xls' && $ext != 'csv') {
                     throw new \Exception('请上传Excel的文档！');
@@ -55,7 +58,7 @@ class UploadController extends BaseController
                 $this->createDir($savePath);
                 if (move_uploaded_file($_FILES['file']['tmp_name'], $savePath)) {
                     $uploadModel->create($upload);
-                    $uploadId = $uploadModel->add($uploadModel->data());
+                    $uploadId = $this->model->Table('upload')->add($uploadModel->data());
                     $upload['id'] = $uploadId;
                     $this->upload = $upload;
                 }
@@ -64,9 +67,9 @@ class UploadController extends BaseController
                 } else {
                     $this->dataHandle();
                 }
-                $model->commit();
+                $this->model->commit();
             } catch (\Exception $e) {
-                $model->rollback();
+                $this->model->rollback();
                 $this->error($e->getMessage());
             }
             $this->redirect('index');
@@ -673,7 +676,7 @@ class UploadController extends BaseController
             'upload_id' => $this->upload['id'],
             'filename' => $filename . '.' . $this->upload['id'],
         ]);
-        $uploadFtpModel->add($uploadFtpModel->data());
+        $this->model->Table('upload_ftp')->add($uploadFtpModel->data());
     }
 
 
@@ -724,6 +727,7 @@ class UploadController extends BaseController
             'messageid' => '332',
             'version' => 'V332M',
         ];
+        $flag = 0;
         foreach ($needList as $tradeNo => $need) {
             $totalOriginalAmount = 0;
             $totalQty = 0;
@@ -812,7 +816,11 @@ class UploadController extends BaseController
             if ($d[0]['number'] > 0) {
                 continue;
             }
-            $uploadWsdlModel->add($uploadWsdlModel->data());
+            $flag = 1;
+            $this->model->Table('upload_wsdl')->add($uploadWsdlModel->data());
+        }
+        if ($flag == 0) {
+            throw new Exception('单据数据均已存在，请勿再次上传');
         }
     }
 
@@ -866,6 +874,7 @@ class UploadController extends BaseController
             'password' => $this->platformWsdlConf['password'],
             'cmdid' => '2000',
         ];
+        $flag = 0;
         foreach ($needList as $tradeNo => $need) {
             $totalOriginalAmount = 0;
             $totalQty = 0;
@@ -924,7 +933,11 @@ class UploadController extends BaseController
             if ($d[0]['number'] > 0) {
                 continue;
             }
-            $uploadWsdlModel->add($uploadWsdlModel->data());
+            $flag = 1;
+            $this->model->Table('upload_wsdl')->add($uploadWsdlModel->data());
+        }
+        if ($flag == 0) {
+            throw new Exception('单据数据均已存在，请勿再次上传');
         }
     }
 
@@ -939,6 +952,7 @@ class UploadController extends BaseController
             'strCallPassword' => $this->platformWsdlConf['password'],
             'strStoreCode' => $this->platformWsdlConf['storecode'],
         ];
+        $flag = 0;
         foreach ($needList as $tradeNo => $need) {
             $totalOriginalAmount = 0;
             $totalQty = 0;
@@ -972,7 +986,11 @@ class UploadController extends BaseController
             if ($d[0]['number'] > 0) {
                 continue;
             }
-            $uploadWsdlModel->add($uploadWsdlModel->data());
+            $flag = 1;
+            $this->model->table('upload_wsdl')->add($uploadWsdlModel->data());
+        }
+        if ($flag == 0) {
+            throw new Exception('单据数据均已存在，请勿再次上传');
         }
     }
 
@@ -1000,7 +1018,7 @@ class UploadController extends BaseController
         if ($last) {
             $count = $last['sort'];
         }
-        $flag = 1;
+        $flag = 0;
         foreach ($needList as $tradeNo => $need) {
             $params = [];
             $totalOriginalAmount = 0;
@@ -1040,10 +1058,9 @@ class UploadController extends BaseController
             if ($d[0]['number'] > 0) {
                 continue;
             }
-            $addStatus = $uploadWsdlModel->add($uploadWsdlModel->data());
-            if ($addStatus) {
-                $flag = 0;
-            }
+            $flag=1;
+            $this->model->table('upload_wsdl')->add($uploadWsdlModel->data());
+           
         }
         if ($flag == 1) {
             throw new Exception('单据数据均已存在，请勿再次上传');
