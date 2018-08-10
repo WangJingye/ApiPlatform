@@ -153,7 +153,7 @@ class UploadController extends BaseController
                 $uploadWsdlModel->where(['upload_id' => $upload['id']])->where('status=0')->delete();
                 unlink(APP_PATH . 'Upload/' . $this->platform['type_code'] . '/' . $upload['save_name']);
                 $uploadModel->where(['id' => $upload['id']])->delete();
-            }else{
+            } else {
                 $this->error('已执行的记录不允许删除！');
             }
         } else if ($this->platform['ftp_need']) {
@@ -807,6 +807,11 @@ class UploadController extends BaseController
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
                 'status' => 0
             ]);
+            $sql = 'select count(*) as number from upload_wsdl as a left join upload as b on b.id=a.upload_id where b.platform_id=' . $this->platform['platform_id'] . ' and a.trade_no="' . $tradeNo . '"';
+            $d = $uploadWsdlModel->query($sql);
+            if ($d[0]['number'] > 0) {
+                continue;
+            }
             $uploadWsdlModel->add($uploadWsdlModel->data());
         }
     }
@@ -905,7 +910,6 @@ class UploadController extends BaseController
             $params['inputpara'] = implode(',', $inputpara);
             $params['rtn'] = 0;
             $uploadWsdlModel = new UploadWsdlModel();
-
             $uploadWsdlModel->create([
                 'upload_id' => $this->upload['id'],
                 'trade_no' => $tradeNo,
@@ -915,6 +919,11 @@ class UploadController extends BaseController
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
                 'status' => 0
             ]);
+            $sql = 'select count(*) as number from upload_wsdl as a left join upload as b on b.id=a.upload_id where b.platform_id=' . $this->platform['platform_id'] . ' and a.trade_no="' . $tradeNo . '"';
+            $d = $uploadWsdlModel->query($sql);
+            if ($d[0]['number'] > 0) {
+                continue;
+            }
             $uploadWsdlModel->add($uploadWsdlModel->data());
         }
     }
@@ -958,6 +967,11 @@ class UploadController extends BaseController
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
                 'status' => 0
             ]);
+            $sql = 'select count(*) as number from upload_wsdl as a left join upload as b on b.id=a.upload_id where b.platform_id=' . $this->platform['platform_id'] . ' and a.trade_no="' . $tradeNo . '"';
+            $d = $uploadWsdlModel->query($sql);
+            if ($d[0]['number'] > 0) {
+                continue;
+            }
             $uploadWsdlModel->add($uploadWsdlModel->data());
         }
     }
@@ -1021,6 +1035,11 @@ class UploadController extends BaseController
                 'qty' => $totalNetAmount > 0 ? 1 : -1,
                 'status' => 0
             ]);
+            $sql = 'select count(*) as number from upload_wsdl as a left join upload as b on b.id=a.upload_id where b.platform_id=' . $this->platform['platform_id'] . ' and a.trade_no="' . $tradeNo . '"';
+            $d = $uploadWsdlModel->query($sql);
+            if ($d[0]['number'] > 0) {
+                continue;
+            }
             $addStatus = $uploadWsdlModel->add($uploadWsdlModel->data());
             if ($addStatus) {
                 $flag = 0;
