@@ -100,7 +100,7 @@ class BaseController extends Controller
 
     public function printHandel($msg)
     {
-        echo str_repeat(' ', 1024 * 1024 * 4);
+        echo str_repeat(' ', 1024 * 4);
 
         echo date('Y-m-d H:i:s ') . $msg . "<br />";
         $this->printMessage .= date('Y-m-d H:i:s ') . $msg . "<br />";
@@ -193,4 +193,80 @@ class BaseController extends Controller
         }
         return false;
     }
+
+
+    public function httpPost($query_url, $postData)
+    {
+        $urlAry = parse_url($query_url);
+
+        $post_url = $urlAry['scheme'] . "://" . $urlAry['host'];
+        $post_url .= ($urlAry['port']) ? ":" . $urlAry['port'] : "";
+        $post_url .= $urlAry['path'];
+        if (function_exists('curl_init')) {
+            //curl
+            $ch = curl_init($post_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 100);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+            $ret = curl_exec($ch);
+            if (28 == curl_errno($ch)) {
+                curl_close($ch);
+                return false;
+            }
+            curl_close($ch);
+        } else {
+            //fsockopen
+            $post_head = "POST " . $urlAry['path'] . " HTTP/1.1\r\n"
+                . "Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/x-shockwave-flash, application/vnd.ms-powerpoint, application/vnd.ms-excel, application/msword, */*\r\n"
+                . "Accept-Language: zh-cn\r\n"
+                . "Content-Type: application/x-www-form-urlencoded\r\n"
+                . "User-Agent: WebClient\r\n"
+                . "Host:" . $urlAry['host'] . ":" . $urlAry['port'] . "\r\n"
+                . "Content-Length: " . strlen($urlAry['query']) . "\r\n"
+                . "Connection: Keep-Alive\r\n"
+                . "Cache-Control: no-cache\r\n\r\n";
+
+            $errno = $errstr = '';
+            $da = @fsockopen($urlAry['host'], $urlAry['port'], $errno, $errstr, 10);
+            if (!$da) {
+                return false;
+            }
+            $response = '';
+            fputs($da, $post_head . $urlAry['query']);
+            while (!feof($da)) $response .= fgets($da, 1024);
+
+            $response = split("\r\n\r\n", $response);
+            $ret = chop($response[1]);
+        }
+        return $ret;
+    }
+
+    public function curlJson($url, $json)
+    {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+//类型为json
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/json; charset=utf-8'
+            )
+        );
+        if (strpos($url, 'https://') !== false) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        }
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+//post传递
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, ($json));
+        $ret = curl_exec($ch);
+        if (28 == curl_errno($ch)) {
+            curl_close($ch);
+            return false;
+        }
+        curl_close($ch);
+        return $ret;
+    }
+
+
 }
