@@ -153,6 +153,52 @@ class BaseController extends Controller
         return $result;
     }
 
+    public function isoftCreateRequest($function, $arg)
+    {
+        try {
+
+            if (!$this->soapClient) {
+                $this->printHandel('创建wsdl');
+                if (strpos($this->platformWsdlConf['wsdl'], 'https://') !== false) {
+                    $opts = [
+                        'ssl' => [
+                            'verify_peer' => false
+                        ],
+                        'https' => [
+                            'curl_verify_ssl_peer' => false,
+                            'curl_verify_ssl_host' => false
+                        ]
+                    ];
+                    $streamContext = stream_context_create($opts);
+                    libxml_disable_entity_loader(false);
+                    $params = [
+                        'location' => str_replace('?wsdl', '', $this->platformWsdlConf['wsdl']),
+                        'uri' => 'http://tempuri.org/',
+                        'stream_context' => $streamContext
+                    ];
+                    $this->soapClient = new \SoapClient(null, $params);
+                } else {
+                    libxml_disable_entity_loader(false);
+                    $params = [
+                        'location' => str_replace('?wsdl', '', $this->platformWsdlConf['wsdl']),
+                        'uri' => 'http://tempuri.org/',
+                    ];
+                    $this->soapClient = new \SoapClient(null, $params);
+                }
+            }
+            $this->soapClient->__setLocation($this->platformWsdlConf['wsdl']);
+            $this->log->sysLog(json_encode($arg));
+            $result = $this->soapClient->__soapCall($function, $arg);
+            $result = json_decode(json_encode($result), true);
+            $this->log->sysLog(json_encode($result));
+
+        } catch (Exception $e) {
+            $this->printHandel($e->getMessage());
+            $result = '';
+        }
+        return $result;
+    }
+
     /**
      * 添加日志文件夹
      * @param $path

@@ -1336,7 +1336,7 @@ class UploadController extends BaseController
                 $result = [];
                 $uploadWsdl['status'] = 1;
             } else {
-                $result = $this->createRequest('PostSalesInfo', json_decode($uploadWsdl['request_data'], true));
+                $result = $this->isoftCreateRequest('PostSalesInfo', json_decode($uploadWsdl['request_data'], true));
                 if (!$result) {
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
                     return;
