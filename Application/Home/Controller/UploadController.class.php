@@ -28,9 +28,8 @@ class UploadController extends BaseController
     public function upload()
     {
         if (IS_POST) {
-            $this->model = M();
             try {
-                $this->model->startTrans();
+                M()->startTrans();
                 $ext = end(explode('.', $_FILES['file']['name']));
                 if ($ext != 'xlsx' && $ext != 'xls' && $ext != 'csv') {
                     throw new \Exception('请上传Excel的文档！');
@@ -57,7 +56,7 @@ class UploadController extends BaseController
                 $this->createDir($savePath);
                 if (move_uploaded_file($_FILES['file']['tmp_name'], $savePath)) {
                     $uploadModel->create($upload);
-                    $uploadId = $this->model->Table('upload')->add($uploadModel->data());
+                    $uploadId = M('upload')->add($uploadModel->data());
                     $upload['id'] = $uploadId;
                     $this->upload = $upload;
                 }
@@ -66,9 +65,9 @@ class UploadController extends BaseController
                 } else {
                     $this->dataHandle();
                 }
-                $this->model->commit();
+                M()->commit();
             } catch (\Exception $e) {
-                $this->model->rollback();
+                M()->rollback();
                 $this->error($e->getMessage());
             }
             $this->redirect('index');
@@ -588,7 +587,7 @@ class UploadController extends BaseController
             'upload_id' => $this->upload['id'],
             'filename' => $filename . '.' . $this->upload['id'],
         ]);
-        $this->model->Table('upload_ftp')->add($uploadFtpModel->data());
+        M('upload_ftp')->add($uploadFtpModel->data());
     }
 
 
@@ -729,7 +728,7 @@ class UploadController extends BaseController
                 continue;
             }
             $flag = 1;
-            $this->model->Table('upload_wsdl')->add($uploadWsdlModel->data());
+            M('upload_wsdl')->add($uploadWsdlModel->data());
         }
         if ($flag == 0) {
             throw new Exception('单据数据均已存在，请勿再次上传');
@@ -850,7 +849,7 @@ class UploadController extends BaseController
                 continue;
             }
             $flag = 1;
-            $this->model->Table('upload_wsdl')->add($uploadWsdlModel->data());
+            M('upload_wsdl')->add($uploadWsdlModel->data());
         }
         if ($flag == 0) {
             throw new Exception('单据数据均已存在，请勿再次上传');
@@ -910,7 +909,7 @@ class UploadController extends BaseController
                 continue;
             }
             $flag = 1;
-            $this->model->table('upload_wsdl')->add($uploadWsdlModel->data());
+            M('upload_wsdl')->add($uploadWsdlModel->data());
         }
         if ($flag == 0) {
             throw new Exception('单据数据均已存在，请勿再次上传');
@@ -989,7 +988,7 @@ class UploadController extends BaseController
                 continue;
             }
             $flag = 1;
-            $this->model->table('upload_wsdl')->add($uploadWsdlModel->data());
+            M('upload_wsdl')->add($uploadWsdlModel->data());
 
         }
         if ($flag == 0) {
@@ -1089,7 +1088,7 @@ class UploadController extends BaseController
                 continue;
             }
             $flag = 1;
-            $this->model->table('upload_wsdl')->add($uploadWsdlModel->data());
+            M('upload_wsdl')->add($uploadWsdlModel->data());
 
         }
         if ($flag == 0) {
@@ -1163,7 +1162,7 @@ class UploadController extends BaseController
                 continue;
             }
             $flag = 1;
-            $this->model->table('upload_wsdl')->add($uploadWsdlModel->data());
+            M('upload_wsdl')->add($uploadWsdlModel->data());
 
         }
         if ($flag == 0) {
