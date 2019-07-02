@@ -207,7 +207,7 @@ class UploadController extends BaseController
         }
         $uploadModel = new UploadModel();
         $this->upload = $uploadModel->where(['id' => $_GET['id']])->find();
-        if (!$this->upload || $this->upload['status'] != 0) {
+        if (!$this->upload || !in_array($this->upload['status'],[0,2])) {
             $this->printHandel('参数有误！');
             return;
         }
