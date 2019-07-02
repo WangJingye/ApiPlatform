@@ -138,7 +138,7 @@ class UploadController extends BaseController
         }
         $uploadModel = new UploadModel();
         $upload = $uploadModel->where(['id' => $_GET['id']])->find();
-        if ($upload['status'] != 0) {
+        if ($upload['status'] != 0 && $upload['status'] != 2) {
             $this->error('参数有误！');
         }
         if ($this->user['is_admin'] != 1) {
@@ -207,7 +207,7 @@ class UploadController extends BaseController
         }
         $uploadModel = new UploadModel();
         $this->upload = $uploadModel->where(['id' => $_GET['id']])->find();
-        if (!$this->upload || !in_array($this->upload['status'],[0,2])) {
+        if (!$this->upload || !in_array($this->upload['status'], [0, 2])) {
             $this->printHandel('参数有误！');
             return;
         }
