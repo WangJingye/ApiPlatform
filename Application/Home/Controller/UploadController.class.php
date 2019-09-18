@@ -238,6 +238,9 @@ class UploadController extends BaseController
                 case 'myc':
                     $this->mycSync($one);
                     break;
+                case 'bylgc':
+                    $this->bylSync($one);
+                    break;
                 default:
                     $this->wsdlSync($one);
 
@@ -289,6 +292,9 @@ class UploadController extends BaseController
                     break;
                 case 'myc'://漫游城
                     $this->mycDataHandle($needList);
+                    break;
+                case 'bylgc'://白玉兰广场
+                    $this->bylDataHandle($needList);
                     break;
                 default:
                     $this->wsdlDataHandle($needList);
@@ -996,7 +1002,6 @@ class UploadController extends BaseController
         }
     }
 
-
     private function isoftDataHandle($needList)
     {
         $uploadModel = new UploadModel();
@@ -1144,6 +1149,109 @@ class UploadController extends BaseController
             ];
             $token = 'pamtest';
             $params['sign'] = sha1($params['timestamp'] . $token);
+
+            $uploadWsdlModel = new UploadWsdlModel();
+            $uploadWsdlModel->create([
+                'upload_id' => $this->upload['id'],
+                'trade_no' => $tradeNo,
+                'trade_date' => date('Y-m-d', $need['tradeTime']),
+                'netamount' => $totalNetAmount,
+                'request_data' => json_encode($params),
+                'sort' => '1',
+                'qty' => $totalNetAmount > 0 ? 1 : -1,
+                'status' => 0
+            ]);
+            $sql = 'select count(*) as number from upload_wsdl as a left join upload as b on b.id=a.upload_id where b.platform_id=' . $this->platform['platform_id'] . ' and a.trade_no="' . $tradeNo . '"';
+            $d = $uploadWsdlModel->query($sql);
+            if ($d[0]['number'] > 0) {
+                continue;
+            }
+            $flag = 1;
+            M('upload_wsdl')->add($uploadWsdlModel->data());
+
+        }
+        if ($flag == 0) {
+            throw new Exception('单据数据均已存在，请勿再次上传');
+        }
+    }
+
+    private function bylDataHandle($needList)
+    {
+        $uploadModel = new UploadModel();
+        $uploadList = $uploadModel->where(['platform_id' => $this->upload['platform_id']])->select();
+        if (!count($uploadList)) {
+            $this->error('数据有误,请重新上传');
+        }
+        $flag = 0;
+        foreach ($needList as $tradeNo => $need) {
+            $totalOriginalAmount = 0;
+            $totalQty = 0;
+            $totalNetAmount = 0;
+            foreach ($need['itemList'] as $key => $item) {
+                if ($item['qty'] == 0) {
+                    unset($needList['itemList'][$key]);
+                    continue;
+                }
+                $totalOriginalAmount += $item['originalamount'];
+                $totalQty += $item['qty'];
+                $totalNetAmount += $item['netamount'];
+            }
+            if (count($need['itemList']) == 0) {
+                continue;
+            }
+            if ($totalNetAmount == 0) {
+                continue;
+            }
+            $params = [
+                'apiKey' => 'CRMINT',
+                'signature' => '076695F3E88BF829EEE62237E79F6F53',
+                'docKey' => '000600620161124000006',
+                'salesItem' => [
+                    [
+                        'salesLineNumber' => 1,
+                        'salesman' => null,
+                        'itemCode' => $this->platformWsdlConf['itemcode'],
+                        'itemOrgId' => '000003',
+                        'itemLotNum' => '*',
+                        'serialNumber' => null,
+                        'inventoryType' => 0,
+                        'qty' => $totalNetAmount > 0 ? 1 : -1,//销售数量
+                        'itemDiscountLess' => 0,
+                        'totalDiscountLess' => 0,
+                        'netAmount' => $totalNetAmount,//净销售金额（即实收金额）
+                        'salesItemRemark' => null,//净销售金额（即实收金额）
+                        'extendParameter' => null,//净销售金额（即实收金额）
+                    ]
+                ],
+                'salesTotal' => [
+                    'cashier' => '001',//收款员编号
+                    'vipCode' => '100',//会员编号
+                    'netQty' => $totalNetAmount > 0 ? 1 : -1,//净销售数量
+                    'netAmount' => $totalNetAmount,//净销售金额
+                    'extendParameter' => null,
+                    'calculateVipBonus' => 0
+                ],
+                'transHeader' => [
+                    'txDate' => date('Y-m-d', $need['tradeTime']),
+                    'ledgerDatetime' => date('Y-m-d H:i:s', $need['tradeTime']),
+                    'storeCode' => $this->platformWsdlConf['storecode'],
+                    'tillId' => $this->platformWsdlConf['tillid'],
+                    'docNo' => $tradeNo,
+                    'voidDocNo' => '',
+                    'txAttrib' => ''
+                ],
+                'salesTender' => [
+                    [
+                        'baseCurrencyCode' => 'BB01',
+                        'tenderCode' => 'CH',
+                        'payAmount' => $totalNetAmount,
+                        'baseAmount' => $totalNetAmount,
+                        'excessAmount' => 0,
+                        'extendParameter' => null,
+                    ]
+                ],
+                'orgSalesMemo' => null
+            ];
 
             $uploadWsdlModel = new UploadWsdlModel();
             $uploadWsdlModel->create([
@@ -1396,6 +1504,54 @@ class UploadController extends BaseController
                     $uploadWsdl['status'] = 2;
                     $error_message = json_encode($result);
                     $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值【' . $result['data']['v_ret'] . '】' . ' 错误信息：' . $error_message);
+                }
+            }
+            $uploadWsdl['response_data'] = json_encode($result);
+            $uploadWsdlModel->create($uploadWsdl);
+            $uploadWsdlModel->save($uploadWsdlModel->data());
+        }
+    }
+
+    private function bylSync($one = '')
+    {
+        $uploadWsdlModel = new UploadWsdlModel();
+        $selector = $uploadWsdlModel->where(['upload_id' => $this->upload['id']])->where('status!=1');
+        if ($one) {
+            $selector = $selector->where(['id' => $one]);
+        }
+        $uploadWsdlList = $selector->select();
+
+        if (!count($uploadWsdlList)) {
+            $this->errorCode = 1;
+            $this->printHandel('不存在单据记录');
+            return;
+        }
+
+        foreach ($uploadWsdlList as $uploadWsdl) {
+
+            $this->printHandel('请求接口,交易单号:' . $uploadWsdl['trade_no'] . ' ...');
+            $otherUpload = $uploadWsdlModel->where(['trade_no' => $uploadWsdl['trade_no'], 'status' => '1'])->find();
+            if ($otherUpload) {
+                $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求成功！');
+                $result = [];
+                $uploadWsdl['status'] = 1;
+            } else {
+                $result = $this->curlJson($this->platformWsdlConf['wsdl'], $uploadWsdl['request_data']);
+                if (!$result) {
+                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求异常！');
+                    return;
+                }
+                $result = json_decode($result, true);
+
+                //返回false都是因为id重复，店铺不喜欢看到错误，直接省略
+                if (isset($result['responseCode']) && $result['responseCode'] == '1') {
+                    $uploadWsdl['status'] = 1;
+                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口成功');
+                } else {
+                    $this->errorCode = 1;
+                    $uploadWsdl['status'] = 2;
+                    $error_message = json_encode($result);
+                    $this->printHandel('交易单号:' . $uploadWsdl['trade_no'] . ' 请求接口失败，返回值【' . $result['responseCode'] . '】' . ' 错误信息：' . $error_message);
                 }
             }
             $uploadWsdl['response_data'] = json_encode($result);

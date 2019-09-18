@@ -292,7 +292,7 @@ class BaseController extends Controller
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HEADER, 0);
-//类型为json
+        //类型为json
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/json; charset=utf-8'
             )
@@ -302,7 +302,7 @@ class BaseController extends Controller
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         }
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-//post传递
+        //post传递
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, ($json));
         $ret = curl_exec($ch);
