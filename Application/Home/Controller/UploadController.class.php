@@ -1326,7 +1326,7 @@ class UploadController extends BaseController
                 'payments' => [
                     [
                         'line' => '1',
-                        'payment' => '8aa382535c5c61b1015c82fc48790003',
+                        'payment' =>  $this->platformWsdlConf['storecode'],
                         'total' => $totalNetAmount,
                         'charge' => 0,
                         'discharge' => 0,
