@@ -315,4 +315,30 @@ class BaseController extends Controller
     }
 
 
+    public function curlJsonWithAuth($url,$json,$basic_auth){
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        //类型为json
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/json; charset=utf-8'
+            )
+        );
+        if (strpos($url, 'https://') !== false) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        }
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        //post传递
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, ($json));
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_USERPWD, $basic_auth);
+        $ret = curl_exec($ch);
+        if (28 == curl_errno($ch)) {
+            curl_close($ch);
+            return false;
+        }
+        curl_close($ch);
+        return $ret;
+    }
 }
